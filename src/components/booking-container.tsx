@@ -20,10 +20,7 @@ import {
 } from "@/components/ui/select"
 
 export function BookingContainer() {
-  const [dates, setDates] = useState<{
-    from: Date | undefined
-    to: Date | undefined
-  }>({
+  const [dates, setDates] = useState<any>({
     from: undefined,
     to: undefined,
   })
