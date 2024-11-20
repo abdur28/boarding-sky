@@ -3,7 +3,7 @@
 import Image from "next/image";
 import React from "react";
 import { CardBody, CardContainer, CardItem } from "./ui/3d-card";
-import Link from "next/link";
+
 
 export function FlightDealCard({
   image,
@@ -30,7 +30,7 @@ export function FlightDealCard({
             height="1000"
             width="1000"
             className="h-60 w-full object-cover rounded-xl  group-hover/card:shadow-xl"
-            alt="thumbnail"
+            alt={link}
           />
         </CardItem>
         <CardItem
