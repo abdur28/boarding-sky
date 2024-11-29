@@ -33,6 +33,7 @@ const Navbar = ({ className }: { className?: string }) => {
             <Menu setActive={setActive} >
                 <Link href="/" className="hover:text-second">Home</Link>
                 <Link href="/flight" className="hover:text-second">Flight</Link>
+                <Link href="/hotel" className="hover:text-second">Hotel</Link>
                 <Link href="/car" className="hover:text-second">Car</Link>
                 <Link href="/tour" className="hover:text-second">Tour</Link>
                 <Link href="/blog" className="hover:text-second">Blog</Link>

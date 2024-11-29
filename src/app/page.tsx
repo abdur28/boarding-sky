@@ -1,4 +1,4 @@
-import { BookingContainer } from "@/components/booking-container";
+import { SearchContainer } from "@/components/search/SearchContainer";
 import Button from "@/components/Button";
 import Hero from "@/components/Hero";
 import { Card } from "@/components/ui/card";
@@ -10,9 +10,11 @@ import { WobbleCards } from "@/components/WobbleCards";
 import Link from "next/link";
 import { BlogCard } from "@/components/BlogCard";
 import { Reviews } from "@/components/Reviews";
+import { blogs } from "@/lib/data";
 
 
 export default function Home() {
+
   return (
     <>
       <div className="w-full h-[calc(100vh-64px)] md:h-[calc(120vh)] lg:h-[calc(120vh)] bg-fourth">
@@ -21,7 +23,7 @@ export default function Home() {
       <div className="w-full lg:h-0 md:h-44 h-64 bg-fourth"></div>
       <div className="flex flex-col bg-gray-50 justify-start items-center gap-10 w-full h-full pb-20">
         <div className="lg:-mt-36 md:-mt-48 -mt-72 w-full h-full">
-          <BookingContainer />
+          <SearchContainer />
         </div>
         <div className="w-full h-full px-5">
           <div className="w-full max-w-6xl mx-auto flex md:flex-row flex-col gap-5 justify-between items-center">
@@ -80,9 +82,9 @@ export default function Home() {
           </div>  
         </div>
       </div>
-      <div className="w-full h-full">
+      {/* <div className="w-full h-full">
         <GlobeSection />
-      </div>
+      </div> */}
       <div className="w-full h-full bg-fourth px-5">
         <div className="w-full max-w-6xl mx-auto flex flex-col gap-5 ">
           <h1 className="text-3xl font-semibold text-Left mt-20">Explore Popular Destinations</h1>
@@ -144,30 +146,18 @@ export default function Home() {
               </Link>
             </div>
             <div className="w-full h-full flex flex-row flex-wrap justify-center  items-center gap-5">
-              <BlogCard 
-                author="John Doe" 
-                date="Dec 12, 2024" 
-                link="/"
-                title="Lorem ipsum dolor sit amet consectetur adipisicing elit." 
-                discription="Lorem ipsum dolor sit amet consectetur adipisicing elit. Quos, perspiciatis. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quos, perspiciatis." 
-                image="https://images.unsplash.com/photo-1731069945702-53e476208ad8?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" />
- 
-              <BlogCard 
-                author="Jane Doe" 
-                date="Dec 6, 2024" 
-                link="/"
-                title="Lorem ipsum dolor sit amet consectetur adipisicing elit." 
-                discription="Lorem ipsum dolor sit amet consectetur adipisicing elit. Quos, perspiciatis. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quos, perspiciatis." 
-                image="https://images.unsplash.com/photo-1727640851526-9dd11cc6bd07?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" />
-     
-              <BlogCard 
-                author="John Doe" 
-                date="Nov 12, 2024" 
-                link="/"
-                title="Lorem ipsum dolor sit amet consectetur adipisicing elit." 
-                discription="Lorem ipsum dolor sit amet consectetur adipisicing elit. Quos, perspiciatis. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quos, perspiciatis." 
-                image="https://images.unsplash.com/photo-1731512883997-bbd3d801e1a9?q=80&w=1533&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" />
-
+              {
+                blogs.map((item, index) => (
+                  <BlogCard 
+                  key={index}
+                  author={item.author}
+                  date={item.date}
+                  description={item.description}
+                  image={item.image}
+                  id={item.id}
+                  title={item.title} 
+                   />
+              ))}
 
             </div>
           </div>  

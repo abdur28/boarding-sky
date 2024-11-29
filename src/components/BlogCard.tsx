@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 import { CardBody, CardContainer, CardItem } from "./ui/3d-card";
 import { UserRound, CalendarCheck } from "lucide-react";
@@ -9,17 +10,17 @@ import { UserRound, CalendarCheck } from "lucide-react";
 export function BlogCard({
   image,
   title,
-  discription,
+  description,
   author,
   date,
-  link,
+  id,
 }:{
   image: string;
   title: string;
-  discription: string;
+  description: string;
   author: string;
   date: string;
-  link: string;
+  id: any;
 }) {
   return (
     <CardContainer className="inter-var">
@@ -30,7 +31,7 @@ export function BlogCard({
             src={image}
             height="1000"
             width="1000"
-            alt={link}
+            alt={title}
             className="h-60 w-full object-cover rounded-xl  group-hover/card:shadow-xl"
           />
         </CardItem>
@@ -56,9 +57,11 @@ export function BlogCard({
           translateZ="60"
           className="text-neutral-500 text-sm max-w-sm mt-2 dark:text-neutral-300"
         >
-          {discription}
+          {description}
         </CardItem>
-        <div className="flex justify-end items-center mt-5">
+        <Link
+        href={`/blog/${id}`}
+        className="flex justify-end items-center mt-5">
           <CardItem
             translateZ={20}
             as="button"
@@ -66,7 +69,7 @@ export function BlogCard({
           >
             Read More
           </CardItem>
-        </div>
+        </Link>
       </CardBody>
     </CardContainer>
   );

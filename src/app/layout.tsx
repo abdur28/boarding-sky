@@ -16,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="w-full h-full min-h-screen flex flex-col justify-between ">
+      <body className="w-full h-full min-h-screen flex flex-col justify-between bg-fourth">
         <Navbar/>
         <div className="w-full min-h-screen">
         {children}

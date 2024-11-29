@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-export function BookingContainer() {
+export function SearchContainer() {
   const [dates, setDates] = useState<any>({
     from: undefined,
     to: undefined,
@@ -37,7 +37,7 @@ export function BookingContainer() {
             </TabsTrigger>
             <TabsTrigger value="hostels" className="gap-2">
               <Hotel className="w-4 h-4" />
-              Hostels
+              Hotels
             </TabsTrigger>
             <TabsTrigger value="cars" className="gap-2">
               <Car className="w-4 h-4" />
@@ -256,7 +256,7 @@ export function BookingContainer() {
                 />
                 <Button className="gap-2">
                   <Search className="w-4 h-4" />
-                  Search Hostels
+                  Search Hotels
                 </Button>
               </div>
             </div>

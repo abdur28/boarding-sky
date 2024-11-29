@@ -136,16 +136,16 @@ const NavMobile = ({ setOpen, open }: { setOpen: React.Dispatch<React.SetStateAc
                             <motion.div
                             whileTap={{ scale: 0.9 }}
                             >
-                                {link.link === "" ? <span>{link.name.toUpperCase()}</span> : <Link href={link.link} className=""
+                                {link.link === "" ? <span className="text-lg">{link.name}</span> : <Link href={link.link} className="text-lg"
                                 onClick={() => setOpen(false)}
-                                >{link.name.toUpperCase()}</Link>}
+                                >{link.name}</Link>}
                             </motion.div>
                             {drop === link.name && link.subItems && link.subItems.map((subItem) => (
                                 <motion.div
                                 key={subItem.name}
                                 whileTap={{ scale: 0.9 }}
                                 >
-                                    <Link href={subItem.link} className="text-sm"
+                                    <Link href={subItem.link} className=""
                                     onClick={() => setOpen(false)}
                                     >{subItem.name}</Link>
                                 </motion.div>
