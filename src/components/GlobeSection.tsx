@@ -10,7 +10,7 @@ const World = dynamic(() => import("./ui/globe").then((m) => m.World), {
   ssr: false,
 });
 
-export function GlobeSection() {
+export function GlobeSection({title, description}:{title: string, description: string}) {
   const globeConfig = {
     pointSize: 4,
     globeColor: "#062056",
@@ -415,10 +415,10 @@ export function GlobeSection() {
           className="div"
         >
           <h2 className="text-center text-2xl md:text-4xl font-bold text-white">
-            Travel the Around the World
+            {title}
           </h2>
           <p className="text-center text-sm md:text-lg font-normal text-neutral-200 max-w-md mt-3 mx-auto">
-            Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo, quos. 
+            {description}
           </p>
         </motion.div>
         <div className="absolute w-full bottom-0 inset-x-0 h-28 md:h-48 bg-gradient-to-b pointer-events-none select-none from-transparent to-black z-40" />

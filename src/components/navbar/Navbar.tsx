@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
 import { FloatingNav } from "../ui/floating-navbar";
+import { ClerkLoaded, ClerkLoading, SignedIn, SignedOut, SignOutButton } from "@clerk/nextjs";
 
 const Navbar = ({ className }: { className?: string }) => {
   const [active, setActive] = useState<string | null>(null);
@@ -45,12 +46,31 @@ const Navbar = ({ className }: { className?: string }) => {
                 </div>
                 </MenuItem>
                 <div className="lg:w-20 md:w-10"></div>
-                <MenuItem setActive={setActive} active={active} item="Login">
-                <div className="flex flex-col space-y-4 text-sm">
-                    <HoveredLink href="/dashboard">Dashboard</HoveredLink>
-                    <HoveredLink href="/profile">Profile</HoveredLink>
-                    <HoveredLink href="/Logout">Logout</HoveredLink>
-                </div>
+                <MenuItem setActive={setActive} active={active} item="Login" >
+                  <ClerkLoading>
+                    <div className="flex flex-row items-center gap-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-second"></div>
+                      <span className="text-sm">Loading...</span>
+                    </div>
+                  </ClerkLoading>
+                  <ClerkLoaded>
+                    <SignedIn>
+                      <div className="flex flex-col space-y-4 text-sm">
+                          <HoveredLink href="/dashboard">Dashboard</HoveredLink>
+                          <SignOutButton>
+                            <p className="text-black hover:text-second hover:cursor-pointer">
+                              Logout
+                            </p>
+                          </SignOutButton>
+                      </div>
+                    </SignedIn>
+                    <SignedOut>
+                      <div className="flex flex-col space-y-4 text-sm">
+                          <HoveredLink href="/sign-in">Login</HoveredLink>
+                          <HoveredLink href="/sign-up">Register</HoveredLink>
+                      </div>
+                    </SignedOut>
+                  </ClerkLoaded>
                 </MenuItem>
             </Menu>
         </div>

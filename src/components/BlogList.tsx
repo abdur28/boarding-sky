@@ -1,27 +1,28 @@
-import { blogs } from "@/lib/data";
 import { BlogCard } from "./BlogCard";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
-const BlogList = ({page}: {page: number}) => {
+const BlogList = ({page, blogsAsString}: {page: number, blogsAsString: string}) => {
+    const blogs = JSON.parse(blogsAsString)
     const maxPerPage = 6;
-    const numPages = Math.ceil(blogs.length / maxPerPage);
-    const currentBlogs = blogs.slice((page - 1) * maxPerPage, page * maxPerPage);
+    const numPages = Math.ceil(blogs?.length / maxPerPage) || 0;
+    const currentBlogs = blogs?.slice((page - 1) * maxPerPage, page * maxPerPage);
 
-    if (currentBlogs.length === 0) {
+    if (currentBlogs?.length === 0) {
         return notFound();
     }
 
     return (
-        <div className="w-full max-w-6xl mx-auto flex flex-col gap-10">
-            <div className="w-full h-full flex flex-col gap-5 justify-center">
-                <h1 className="text-4xl font-semibold">Latest Blog</h1>
-                <p className="text-lg text-muted-foreground">Lorem ipsum dolor sit amet consectetur adipisicing elit. Iste nisi voluptatibus, iure facilis similique in assumenda dignissimos dolorem culpa, neque soluta, illo impedit totam! Minus nisi esse dicta excepturi? Adipisci?</p>
+        <>
+            {!currentBlogs?.length && (
+            <div className="w-full h-full flex flex-col gap-5 justify-center items-center text-center text-muted-foreground">
+                <h1 className="text-3xl font-semibold">No blog found</h1>
             </div>
+            )}
             <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {currentBlogs.map((blog) => (
-                    <BlogCard key={blog.id} {...blog} />
+                {currentBlogs?.length > 0 && currentBlogs?.map((blog: any) => (
+                    <BlogCard key={blog._id} {...blog} />
                 ))}
             </div>
             <div className="w-full h-full flex justify-center items-center">
@@ -60,7 +61,7 @@ const BlogList = ({page}: {page: number}) => {
                     )}
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 

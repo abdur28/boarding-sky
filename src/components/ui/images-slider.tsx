@@ -2,6 +2,7 @@
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 
 export const ImagesSlider = ({
   images,
@@ -14,15 +15,14 @@ export const ImagesSlider = ({
 }: {
   images: string[];
   children?: React.ReactNode;
-  overlay?: React.ReactNode;
+  overlay?: boolean;
   overlayClassName?: string;
   className?: string;
   autoplay?: boolean;
   direction?: "up" | "down";
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [loadedImages, setLoadedImages] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleNext = () => {
     setCurrentIndex((prevIndex) =>
@@ -36,28 +36,16 @@ export const ImagesSlider = ({
     );
   };
 
+  // Preload current image
   useEffect(() => {
-    loadImages();
-  }, []);
+    if (!images[currentIndex]) return;
+    
+    setIsLoading(true);
+    const img = new Image();
+    img.src = images[currentIndex];
+    img.onload = () => setIsLoading(false);
+  }, [currentIndex, images]);
 
-  const loadImages = () => {
-    setLoading(true);
-    const loadPromises = images.map((image) => {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.src = image;
-        img.onload = () => resolve(image);
-        img.onerror = reject;
-      });
-    });
-
-    Promise.all(loadPromises)
-      .then((loadedImages) => {
-        setLoadedImages(loadedImages as string[]);
-        setLoading(false);
-      })
-      .catch((error) => console.error("Failed to load images", error));
-  };
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "ArrowRight") {
@@ -71,7 +59,7 @@ export const ImagesSlider = ({
 
     // autoplay
     let interval: any;
-    if (autoplay) {
+    if (autoplay && !isLoading) {
       interval = setInterval(() => {
         handleNext();
       }, 5000);
@@ -81,7 +69,7 @@ export const ImagesSlider = ({
       window.removeEventListener("keydown", handleKeyDown);
       clearInterval(interval);
     };
-  }, []);
+  }, [autoplay, isLoading]);
 
   const slideVariants = {
     initial: {
@@ -114,7 +102,9 @@ export const ImagesSlider = ({
     },
   };
 
-  const areImagesLoaded = loadedImages.length > 0;
+  if (!images || images.length === 0) {
+    return null;
+  }
 
   return (
     <div
@@ -126,26 +116,47 @@ export const ImagesSlider = ({
         perspective: "1000px",
       }}
     >
-      {areImagesLoaded && children}
-      {areImagesLoaded && overlay && (
+      {children}
+      {overlay && (
         <div
           className={cn("absolute inset-0 bg-black/60 z-40", overlayClassName)}
         />
       )}
 
-      {areImagesLoaded && (
-        <AnimatePresence>
-          <motion.img
-            key={currentIndex}
-            src={loadedImages[currentIndex]}
-            initial="initial"
-            animate="visible"
-            exit={direction === "up" ? "upExit" : "downExit"}
-            variants={slideVariants}
-            className="image h-full w-full absolute inset-0 object-cover object-center"
-          />
-        </AnimatePresence>
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100/80 z-50">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-800" />
+            <span className="text-sm text-gray-600">Loading image...</span>
+          </div>
+        </div>
       )}
+
+      <AnimatePresence mode="wait">
+        <motion.img
+          key={currentIndex}
+          src={images[currentIndex]}
+          initial="initial"
+          animate="visible"
+          exit={direction === "up" ? "upExit" : "downExit"}
+          variants={slideVariants}
+          className="image h-full w-full absolute inset-0 object-cover object-center"
+        />
+      </AnimatePresence>
+
+      {/* Navigation indicators */}
+      <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-50">
+        {images.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            className={cn(
+              "w-2 h-2 rounded-full transition-all",
+              currentIndex === index ? "bg-white w-4" : "bg-white/50"
+            )}
+          />
+        ))}
+      </div>
     </div>
   );
 };

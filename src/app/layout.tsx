@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import FooterSection from "@/components/footer/Footer";
 import Navbar from "@/components/navbar/Navbar";
+import { ClerkProvider } from "@clerk/nextjs";
 
 
 export const metadata: Metadata = {
@@ -15,14 +16,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="w-full h-full min-h-screen flex flex-col justify-between bg-fourth">
-        <Navbar/>
-        <div className="w-full min-h-screen">
-        {children}
-        </div>
-        <FooterSection/>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className="w-full h-full min-h-screen flex flex-col justify-between bg-fourth">
+          <Navbar/>
+          <div className="w-full min-h-screen">
+          {children}
+          </div>
+          <FooterSection/>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

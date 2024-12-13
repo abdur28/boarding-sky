@@ -1,8 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import Button from '../Button';
+import { getInfo } from '../../lib/data';
 
-export default function FooterSection(){
+export default async function FooterSection(){
+    const info = await getInfo() 
+
     return (
         <footer className="border-b h-full w-full bg-fourth pt-10">
             <div className="md:px-20 h-full w-full px-10">
@@ -19,7 +22,7 @@ export default function FooterSection(){
                                 />
                             </Link>
                             <p className="mt-6 text-sm text-body text-black/70">
-                                Lorem ipsum dolor sit amet consectetur adipisicing elit. Laborum veniam consequuntur eveniet, dolores incidunt et. Sed dolore recusandae, 
+                            {info?.footerPageText} 
                             </p>
                         </div>
                     </div>
@@ -74,15 +77,15 @@ export default function FooterSection(){
                                 <span className="text-title font-medium text-lg">Contact Us</span>
                                 <div className='flex items-center gap-2'>
                                     <Image src="/location.png" alt="location" width={25} height={25} />
-                                    <span className="text-body block hover:text-title">123 Main Street, Anytown, USA</span>
+                                    <span className="text-body block hover:text-title">{info?.address}</span>
                                 </div>
                                 <div className='flex items-center gap-2'>
                                     <Image src="/phone-call.png" alt="email" width={25} height={25} />
-                                    <span className="text-body block hover:text-title">(123) 456-7890</span>
+                                    <span className="text-body block hover:text-title">{info?.phone}</span>
                                 </div>
                                 <div className='flex items-center gap-2'>
                                     <Image src="/email.png" alt="email" width={25} height={25} />
-                                    <span className="text-body block hover:text-title">example@email.com</span>
+                                    <span className="text-body block hover:text-title">{info?.email}</span>
                                 </div>
                             </div>
                             <form className='flex flex-col w-full h-full gap-2'>

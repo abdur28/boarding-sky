@@ -1,10 +1,12 @@
 'use client'
 
+import { ClerkLoaded, ClerkLoading, SignedOut, SignedIn, SignOutButton } from "@clerk/nextjs"
 import { useState } from "react"
 import ToggleButton from "./ToogleButton"
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 
 const variants = {
     open: {
@@ -41,18 +43,6 @@ const linkVariants = {
 const NavMobile = ({ setOpen, open }: { setOpen: React.Dispatch<React.SetStateAction<boolean>>; open: boolean }) => {
     const [drop, setDrop] = useState('')
     const links = [
-        {
-            name: "Home",
-            link: "/",
-        },
-        {
-            name: "Dashboard",
-            link: "/dashboard",
-        },
-        {
-            name: "Profile",
-            link: "/profile",
-        },
         {
             name: "Hotels",
             link: "/hotels",
@@ -91,10 +81,6 @@ const NavMobile = ({ setOpen, open }: { setOpen: React.Dispatch<React.SetStateAc
                 },
             ]
         },
-        {
-            name: "Logout",
-            link: "/Logout",
-        }
     ]
 
     return (
@@ -125,6 +111,40 @@ const NavMobile = ({ setOpen, open }: { setOpen: React.Dispatch<React.SetStateAc
                 <motion.div
                 className="mb-7 px-5 pb-10 border-b-2 border-gray-300"
                 >
+                    <motion.div
+                    variants={linkVariants}
+                    animate={open ? "open" : "closed"}
+                    key={'Home'}
+                    className="py-3 px-3 border-t-2 flex flex-row justify-between border-gray-300"
+                    >
+                        <div className="flex flex-col gap-2">
+                            <motion.div
+                            whileTap={{ scale: 0.9 }}
+                            >
+                                <Link href={"/"} className="text-lg"
+                                onClick={() => setOpen(false)}
+                                >{"Home"}</Link>
+                            </motion.div>
+                        </div>
+                    </motion.div>
+                    <SignedIn>
+                        <motion.div
+                        variants={linkVariants}
+                        animate={open ? "open" : "closed"}
+                        key={'Dashboard'}
+                        className="py-3 px-3 border-t-2 flex flex-row justify-between border-gray-300"
+                        >
+                            <div className="flex flex-col gap-2">
+                                <motion.div
+                                whileTap={{ scale: 0.9 }}
+                                >
+                                    <Link href={"/dashboard"} className="text-lg"
+                                    onClick={() => setOpen(false)}
+                                    >{"Dashboard"}</Link>
+                                </motion.div>
+                            </div>
+                        </motion.div>
+                    </SignedIn>
                 {links.map((link) => (
                     <motion.div
                     variants={linkVariants}
@@ -162,6 +182,63 @@ const NavMobile = ({ setOpen, open }: { setOpen: React.Dispatch<React.SetStateAc
                         )}
                     </motion.div>
                 ))}   
+                    <ClerkLoading>
+                        <motion.div
+                        variants={linkVariants}
+                        animate={open ? "open" : "closed"}
+                        key={'signout'}
+                        className="py-3 px-3 border-t-2 flex flex-row justify-between border-gray-300"
+                        >
+                            <div className="flex flex-col gap-2">
+                                <motion.div
+                                whileTap={{ scale: 0.9 }}
+                                >
+                                    <p className="text-lg"
+                                    >{"Logout"}</p>
+                                </motion.div>
+                            </div>
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </motion.div>
+                    </ClerkLoading>
+                    <ClerkLoaded>
+                    <SignedOut>
+                        <motion.div
+                        variants={linkVariants}
+                        animate={open ? "open" : "closed"}
+                        key={'login'}
+                        className="py-3 px-3 border-t-2 flex flex-row justify-between border-gray-300"
+                        >
+                            <div className="flex flex-col gap-2">
+                                <motion.div
+                                whileTap={{ scale: 0.9 }}
+                                >
+                                    <Link href={"/sign-in"} className="text-lg"
+                                    onClick={() => setOpen(false)}
+                                    >{"Login"}</Link>
+                                </motion.div>
+                            </div>
+                        </motion.div>
+                    </SignedOut>
+                    <SignedIn>
+                        <motion.div
+                        variants={linkVariants}
+                        animate={open ? "open" : "closed"}
+                        key={'signout'}
+                        className="py-3 px-3 border-t-2 flex flex-row justify-between border-gray-300"
+                        >
+                            <SignOutButton>
+                            <div className="flex flex-col gap-2">
+                                <motion.div
+                                whileTap={{ scale: 0.9 }}
+                                >
+                                    <p className="text-lg"
+                                    >{"Logout"}</p>
+                                </motion.div>
+                            </div>
+                            </SignOutButton>
+                        </motion.div>
+                    </SignedIn>
+                    </ClerkLoaded>
                     <motion.div className="flex flex-col text-sm gap-5 border-t-2 border-gray-300 pt-5">
                         <div className="flex flex-row items-center gap-8 ">
                             <a href="mailto:example@email.com" className="flex flex-row items-center gap-2">

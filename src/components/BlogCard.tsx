@@ -5,35 +5,46 @@ import Link from "next/link";
 import React from "react";
 import { CardBody, CardContainer, CardItem } from "./ui/3d-card";
 import { UserRound, CalendarCheck } from "lucide-react";
+import { CldImage } from "next-cloudinary";
 
 
 export function BlogCard({
-  image,
+  images,
   title,
-  description,
+  subTitle,
   author,
-  date,
-  id,
+  publishDate,
+  _id,
 }:{
-  image: string;
+  images: any;
   title: string;
-  description: string;
+  subTitle: string;
   author: string;
-  date: string;
-  id: any;
+  publishDate: string;
+  _id: any;
 }) {
   return (
     <CardContainer className="inter-var">
       <CardBody className="bg-white relative group/card border-black/[0.1] w-[calc(100vw-2rem)] sm:w-[23rem] h-auto rounded-xl p-6 border">
        
         <CardItem translateZ="100" className="w-full">
-          <Image
-            src={image}
+          {images && images?.length > 0 ? (
+            <CldImage
+            src={images[0]}
             height="1000"
             width="1000"
             alt={title}
             className="h-60 w-full object-cover rounded-xl  group-hover/card:shadow-xl"
           />
+          ): (
+            <Image
+            src={'/placeholder-image.png'}
+            height="1000"
+            width="1000"
+            alt={title}
+            className="h-60 w-full object-cover rounded-xl  group-hover/card:shadow-xl"
+          />
+          )}
         </CardItem>
         <CardItem
           as="div"
@@ -44,7 +55,7 @@ export function BlogCard({
           <span className="ml-2">{author}</span>
           <span className="ml-2">|</span>
           <CalendarCheck className="w-5 h-5 ml-2 text-muted-foreground" />
-          <span className="ml-2">{date}</span>
+          <span className="ml-2">{publishDate}</span>
         </CardItem>
         <CardItem
           translateZ="50"
@@ -57,10 +68,10 @@ export function BlogCard({
           translateZ="60"
           className="text-neutral-500 text-sm max-w-sm mt-2 dark:text-neutral-300"
         >
-          {description}
+          {subTitle}
         </CardItem>
         <Link
-        href={`/blog/${id}`}
+        href={`/blog/${_id}`}
         className="flex justify-end items-center mt-5">
           <CardItem
             translateZ={20}

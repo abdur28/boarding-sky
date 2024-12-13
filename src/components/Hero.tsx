@@ -1,15 +1,17 @@
-import Image from "next/image";
+'use client'
+
+import { CldImage } from 'next-cloudinary';
 import Button from "./Button";
 import Link from "next/link";
 
-const Hero = () => {
+const Hero = ({title, description, image}: {title: string, description: string, image: string}) => {
     return (
         <div className="flex flex-col lg:flex-row w-full  h-[calc(100vh-64px)] md:h-[calc(120vh)] lg:h-[calc(100vh-64px)] px-5 md:px-20 ">
             <div className="flex flex-col gap-5 w-full h-1/2 lg:w-1/2 lg:h-full justify-center  lg:text-left text-center items-center md:px-20 lg:pr-0">
                 <h1 className="text-5xl font-semibold">
-                Your Journey Begins Above the Clouds
+                {title}
                 </h1>
-                <p className="text-black/70">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Quos, perspiciatis.</p>
+                <p className="text-black/70">{description}</p>
                 <div className="flex w-full justify-center lg:justify-start gap-5">
                     <Link href="/flight">
                         <Button name="Book Now"/>
@@ -17,8 +19,8 @@ const Hero = () => {
                 </div>
             </div>
             <div className="flex w-full h-1/2 lg:w-1/2 lg:h-full justify-center items-center lg:-mt-0 -mt-16 p-5">
-                <Image 
-                src={"/hero.png"}
+                <CldImage 
+                src={image}
                 alt="hero"
                 width={500}
                 height={500}
