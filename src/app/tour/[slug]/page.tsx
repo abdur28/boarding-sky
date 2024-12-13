@@ -4,10 +4,15 @@ import { ImagesSlider } from "@/components/ui/images-slider";
 import { getTour } from "@/lib/data";
 import { CalendarCheck, UserRound } from "lucide-react";
 import Image from "next/image";
+import { notFound } from "next/navigation";
 
 const SingleTour = async ({ params }: { params: Promise<any> }) => {
     const { slug } = await params;
     const tour = await getTour(slug);
+
+    if (!tour) {
+      return notFound();
+    }
 
     const sampleTour = {
         _id: "tour123",

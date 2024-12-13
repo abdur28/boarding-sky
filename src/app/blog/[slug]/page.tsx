@@ -3,10 +3,13 @@ import { ImagesSlider } from "@/components/ui/images-slider";
 import { getBlog } from "@/lib/data";
 import { CalendarCheck, UserRound } from "lucide-react";
 import Image from "next/image";
+import { notFound } from "next/navigation";
 
 const SingleBlog = async ({ params }: { params: Promise<any> }) => {
     const { slug } = await params;
     const blog = await getBlog(slug);
+
+    if (!blog) return notFound();
 
     return (
         <div className="w-full h-full ">
