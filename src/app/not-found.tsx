@@ -17,7 +17,7 @@ export default function NotFound() {
             Page Not Found
           </h1>
           <p className="text-gray-500">
-            Looks like this destination doesn't exist. Let's get you back on track.
+            {`Looks like this destination doesn't exist. Let's get you back on track.`}
           </p>
         </div>
 
