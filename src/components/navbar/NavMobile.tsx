@@ -6,7 +6,7 @@ import ToggleButton from "./ToogleButton"
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { Loader2, User2 } from "lucide-react";
 
 const variants = {
     open: {
@@ -192,7 +192,9 @@ const NavMobile = ({ setOpen, open }: { setOpen: React.Dispatch<React.SetStateAc
                             <div className="flex flex-col gap-2">
                                 <motion.div
                                 whileTap={{ scale: 0.9 }}
+                                className="flex flex-row items-center gap-2"
                                 >
+                                    <User2 className="h-6 w-6" />
                                     <p className="text-lg"
                                     >{"Logout"}</p>
                                 </motion.div>
@@ -211,7 +213,9 @@ const NavMobile = ({ setOpen, open }: { setOpen: React.Dispatch<React.SetStateAc
                             <div className="flex flex-col gap-2">
                                 <motion.div
                                 whileTap={{ scale: 0.9 }}
+                                className="flex flex-row items-center gap-2"
                                 >
+                                    <User2 className="h-6 w-6" />
                                     <Link href={"/sign-in"} className="text-lg"
                                     onClick={() => setOpen(false)}
                                     >{"Login"}</Link>
@@ -230,8 +234,10 @@ const NavMobile = ({ setOpen, open }: { setOpen: React.Dispatch<React.SetStateAc
                             <div className="flex flex-col gap-2">
                                 <motion.div
                                 whileTap={{ scale: 0.9 }}
+                                className="flex flex-row items-center gap-2"
                                 >
-                                    <p className="text-lg"
+                                    <User2 className="h-6 w-6" />
+                                   <p className="text-lg"
                                     >{"Logout"}</p>
                                 </motion.div>
                             </div>

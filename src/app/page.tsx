@@ -81,9 +81,9 @@ export default async function Home() {
           </div>  
         </div>
       </div>
-      {/* <div className="w-full h-full">
+      <div className="w-full h-full">
         <GlobeSection title={info?.globeText} description={info?.globeDescription} />
-      </div> */}
+      </div>
       <div className="w-full h-full bg-fourth px-5">
         <div className="w-full max-w-6xl mx-auto flex flex-col gap-5 ">
           <h1 className="text-3xl font-semibold text-Left mt-20">Explore Popular Destinations</h1>
