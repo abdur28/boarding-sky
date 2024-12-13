@@ -4,7 +4,7 @@ import { getBlog } from "@/lib/data";
 import { CalendarCheck, UserRound } from "lucide-react";
 import Image from "next/image";
 
-const SingleBlog = async ({ params }: { params: { slug: string } }) => {
+const SingleBlog = async ({ params }: { params: Promise<any> }) => {
     const { slug } = await params;
     const blog = await getBlog(slug);
 

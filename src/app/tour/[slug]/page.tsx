@@ -5,7 +5,7 @@ import { getTour } from "@/lib/data";
 import { CalendarCheck, UserRound } from "lucide-react";
 import Image from "next/image";
 
-const SingleTour = async ({ params }: { params: { slug: string } }) => {
+const SingleTour = async ({ params }: { params: Promise<any> }) => {
     const { slug } = await params;
     const tour = await getTour(slug);
 
