@@ -270,7 +270,7 @@ export default function SingleTourPage({ tourAsString }: { tourAsString: string 
 
             {/* Included Features */}
             <Card className="p-6">
-              <h3 className="font-semibold mb-4">What's Included</h3>
+              <h3 className="font-semibold mb-4">{`What's Included`}</h3>
               <div className="space-y-3">
                 {tour.included.map((feature, index) => (
                   <div key={index} className="flex items-center gap-2">

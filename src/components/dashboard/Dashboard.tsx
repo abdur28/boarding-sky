@@ -207,7 +207,7 @@ const Content = ({ active, role, user }: { active: string; role: string, user: a
   if (!hasAccess(active)) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="text-red-500">You don't have access to this section.</p>
+        <p className="text-red-500">{`You don't have access to this section.`}</p>
       </div>
     );
   }

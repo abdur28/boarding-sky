@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { HotelCard } from "../HotelCard"
 import { useRouter, useSearchParams } from "next/navigation"
+import { Card, CardContent } from "../ui/card"
 
 interface HotelSearchPageProps {
     city: string
