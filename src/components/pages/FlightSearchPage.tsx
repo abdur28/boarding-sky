@@ -175,6 +175,7 @@ const FlightSearchPage = ({
             <div className="w-full flex flex-col gap-5">
                 {currentPageOffers.map((offer: any) => (
                     <FlightCard
+                        id={offer.id}
                         key={offer.id}
                         price={offer.price?.grandTotal}
                         itineraries={offer.itineraries}

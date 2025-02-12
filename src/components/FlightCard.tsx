@@ -4,6 +4,7 @@ import { ChevronDown, Plane, PlaneTakeoff, PlaneLanding } from 'lucide-react'
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { useRouter } from 'next/navigation'
 
 interface Location {
   cityCode: string
@@ -39,6 +40,7 @@ interface Itinerary {
 }
 
 interface FlightCardProps {
+  id: string
   price: number
   itineraries: Itinerary[]
   fareDetailsBySegment: FareDetail[]
@@ -229,13 +231,17 @@ const FlightCard = ({
   oneWay,
   origin,
   destination,
-  locations
+  locations,
+  id
 }: FlightCardProps) => {
   const [isFirstDetailOpen, setIsFirstDetailOpen] = useState(false)
   const [isSecondDetailOpen, setIsSecondDetailOpen] = useState(false)
+  const router = useRouter()
 
   return (
-    <Card className="w-full">
+    <Card 
+    onClick={() => router.push(`/flight/booking/${id}`)}
+    className="w-full">
       <CardContent className="p-6 flex flex-col gap-4">
         <div className="flex flex-col gap-2 md:gap-0">
           {/* Airline Header */}

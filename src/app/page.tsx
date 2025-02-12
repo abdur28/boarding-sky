@@ -82,7 +82,7 @@ export default async function Home() {
         </div>
       </div>
       <div className="w-full h-full">
-        <GlobeSection title={info?.globeText} description={info?.globeDescription} />
+        {/* <GlobeSection title={info?.globeText} description={info?.globeDescription} /> */}
       </div>
       <div className="w-full h-full bg-fourth px-5">
         <div className="w-full max-w-6xl mx-auto flex flex-col gap-5 ">
