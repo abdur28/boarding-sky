@@ -5,53 +5,8 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useRouter } from 'next/navigation'
+import { FareDetail, FlightCardProps, FlightSegment, Itinerary, Location } from '@/types'
 
-interface Location {
-  cityCode: string
-  countryCode: string
-}
-
-interface Segment {
-  departure: {
-    at: string
-    iataCode: string
-  }
-  arrival: {
-    at: string
-    iataCode: string
-  }
-  carrierCode: string
-  number: string
-  aircraft: {
-    code: string
-  }
-}
-
-interface FareDetail {
-  cabin: string
-  includedCheckedBags: {
-    quantity: number
-  }
-}
-
-interface Itinerary {
-  duration: string
-  segments: Segment[]
-}
-
-interface FlightCardProps {
-  id: string
-  price: number
-  itineraries: Itinerary[]
-  fareDetailsBySegment: FareDetail[]
-  airlines: Record<string, string>
-  aircrafts: Record<string, string>
-  airlineCodes: string[]
-  oneWay: boolean
-  origin: string
-  destination: string
-  locations: Record<string, Location>
-}
 
 const formatTime = (dateTime: string) => {
   const [date, time] = dateTime.split('T')
@@ -61,7 +16,7 @@ const formatTime = (dateTime: string) => {
   }
 }
 
-const calculateLayover = (currentSegment: Segment, previousSegment: Segment) => {
+const calculateLayover = (currentSegment: FlightSegment, previousSegment: FlightSegment) => {
   const layoverTime = new Date(currentSegment.departure.at).getTime() - 
                      new Date(previousSegment.arrival.at).getTime()
   const hours = Math.floor(layoverTime / 1000 / 60 / 60)
@@ -104,13 +59,13 @@ const FlightSegmentDetails = ({
   showLayover = false,
   previousSegment = null
 }: {
-  segment: Segment
+  segment: FlightSegment
   fareDetail: FareDetail
   airlines: Record<string, string>
   aircrafts: Record<string, string>
   locations: Record<string, Location>
   showLayover?: boolean
-  previousSegment?: Segment | null
+  previousSegment?: FlightSegment | null
 }) => {
   const departure = formatTime(segment.departure.at)
   const arrival = formatTime(segment.arrival.at)
@@ -122,7 +77,7 @@ const FlightSegmentDetails = ({
           <div className="border-t-2 w-full bg-muted-foreground" />
           <p className="text-sm">
             <span className="font-medium">Layover:</span> {calculateLayover(segment, previousSegment)} in{' '}
-            {locations[segment.departure.iataCode]?.cityCode}, {locations[segment.departure.iataCode]?.countryCode}
+            {locations[segment.departure.iataCode].cityCode}, {locations[segment.departure.iataCode]?.countryCode}
           </p>
           <div className="border-t-2 w-full bg-muted-foreground" />
         </>
@@ -222,6 +177,7 @@ const FlightRoute = ({
 }
 
 const FlightCard = ({
+  id,
   price,
   itineraries,
   fareDetailsBySegment,
@@ -232,7 +188,9 @@ const FlightCard = ({
   origin,
   destination,
   locations,
-  id
+  providerId,
+  refundable
+  
 }: FlightCardProps) => {
   const [isFirstDetailOpen, setIsFirstDetailOpen] = useState(false)
   const [isSecondDetailOpen, setIsSecondDetailOpen] = useState(false)

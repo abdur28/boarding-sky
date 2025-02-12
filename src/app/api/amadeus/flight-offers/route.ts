@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic'
 export const POST = async (req: Request) => {
     noStore();
     const { token, origin, destination, adults, travelClass, departureDate, returnDate, children, infants } = await req.json();
+
     try {
         const response = await fetch(`https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${origin}&destinationLocationCode=${destination}&travelClass=${travelClass}&departureDate=${departureDate}${returnDate  ? `&returnDate=${returnDate}`: ``}&adults=${adults}${children > 0 ? `&children=${children}`: ``}${infants > 0 ? `&infants=${infants}`: ``}&currencyCode=USD&nonStop=false&max=100`, {
             method: "GET",

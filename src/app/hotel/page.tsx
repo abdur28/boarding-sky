@@ -1,25 +1,13 @@
-import Header from "@/components/Header"
-import HotelSearch from "@/components/search/HotelSearch"
-import { Card, CardContent } from "@/components/ui/card"
+import HotelPage from "@/components/pages/HotelPage";
+import { getDestinations, getInfo } from "@/lib/data";
 
-const HotelPage = () => {
+const Hotel = async () => {
+    const infoData = await getInfo()
+    const destinations = await getDestinations();
+
     return (
-        <div className="w-full h-full">
-            <Header title="Search Hotels"/>
-            <div className="w-full h-full flex flex-col justify-center items-center gap-10">
-                <div className="w-full h-full">
-                    <div className="w-full h-full px-5">
-                        <Card className="w-full max-w-6xl mx-auto">
-                            <CardContent className="p-6">
-                                <HotelSearch />
-                            </CardContent> 
-                        </Card>
-                    </div>
-                </div>
-                
-            </div>
-        </div>
+        <HotelPage infoDataAsString={JSON.stringify(infoData)} destinationsAsString={JSON.stringify(destinations)} />
     )
 }
 
-export default HotelPage
+export default Hotel

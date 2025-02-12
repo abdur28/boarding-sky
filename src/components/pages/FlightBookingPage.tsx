@@ -37,7 +37,7 @@ import { Checkbox } from '../ui/checkbox'
 
 const FlightSummary = ({ flight }: { flight: any }) => {
   return (
-    <Card className="lg:sticky lg:top-20">
+    <Card className="lg:sticky lg:top-20 ">
       <CardHeader>
         <CardTitle>Your Trip Summary</CardTitle>
         <CardDescription>Review your flight details</CardDescription>
@@ -264,12 +264,12 @@ export default function FlightBookingPage() {
     <div className="container mx-auto py-8 px-4">
       <div className="lg:grid lg:grid-cols-12 lg:gap-8">
         {/* Left Side - Flight Summary */}
-        <div className="hidden lg:block lg:col-span-4">
+        <div className=" lg:col-span-4 lg:pb-0 pb-6 ">
           <FlightSummary flight={flight} />
         </div>
 
         {/* Right Side - Booking Forms */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="lg:col-span-8 space-y-6 ">
           {/* Passenger Information */}
           <Card>
             <CardHeader>

@@ -8,8 +8,10 @@ import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent } from "../ui/card"
+import { useFlight } from "@/hooks/useFlight"
 
 const FlightSearchPage = ({
+    providerIds,
     origin, 
     destination, 
     adults, 
@@ -17,8 +19,9 @@ const FlightSearchPage = ({
     infants, 
     travelClass, 
     departureDate, 
-    returnDate
+    returnDate,
 }:{
+    providerIds: Array<string>,
     origin: string,
     destination: string,
     adults: number,
@@ -26,9 +29,9 @@ const FlightSearchPage = ({
     infants: number,
     travelClass: string,
     departureDate: string,
-    returnDate?: string
+    returnDate?: string,
 }) => {
-    const { flightOfferSearch, flightsOffers, isLoading } = useAmadeus()
+    const { flightOfferSearch, flightsOffers } = useAmadeus()
     const [offers, setOffers] = useState<any>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -36,6 +39,8 @@ const FlightSearchPage = ({
     const [aircrafts, setAircrafts] = useState<any>({})
     const [locations, setLocations] = useState<any>([])
     const [filteredOffers, setFilteredOffers] = useState<any>([])
+
+    const {searchFlightOffers,flightOffers, isLoading} = useFlight()
 
     const [page, setPage] = useState(1)
     const [limit] = useState(10)
@@ -46,7 +51,8 @@ const FlightSearchPage = ({
             try {
                 setLoading(true)
                 setError(null)
-                await flightOfferSearch(
+                await searchFlightOffers({                    
+                    providerIds: ['amadeus'],
                     origin,
                     destination,
                     adults,
@@ -55,7 +61,8 @@ const FlightSearchPage = ({
                     travelClass,
                     departureDate,
                     returnDate
-                )
+                })
+                console.log('Flight offers:', flightOffers)
             } catch (err) {
                 setError('Failed to fetch flight offers. Please try again.')
                 console.error('Flight search error:', err)
