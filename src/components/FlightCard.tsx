@@ -5,7 +5,27 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useRouter } from 'next/navigation'
-import { FareDetail, FlightCardProps, FlightSegment, Itinerary, Location } from '@/types'
+import { Badge } from "@/components/ui/badge"
+import { FareDetail, FlightOffer, FlightSegment, Itinerary } from '@/types'
+
+interface FlightCardProps {
+  id: string
+  price: number
+  itineraries: Array<Itinerary>
+  fareDetailsBySegment: Array<FareDetail>
+  airlines: Record<string, string>
+  aircrafts: Record<string, string>
+  airlineCodes: Array<string>
+  oneWay: boolean
+  origin: string
+  destination: string
+  locations: Record<string, {
+    cityCode: string;
+    countryCode: string;
+  }>;
+  providerId: string
+  refundable?: boolean
+}
 
 
 const formatTime = (dateTime: string) => {
@@ -29,19 +49,25 @@ const BaggageInfo = ({ fareDetail }: { fareDetail: FareDetail }) => {
     <div className="mt-3 p-2 bg-gray-50 rounded-md">
       <p className="font-medium text-xs mb-2">Baggage Information:</p>
       <div className="space-y-1 text-xs">
-        <div className="flex items-start gap-2">
-          <div className="min-w-4 h-4">
-            💼
-          </div>
-          <p>Carry-on bag included (17 lbs)</p>
-        </div>
-        {fareDetail.includedCheckedBags.quantity > 0 && (
+        {fareDetail.baggage.cabin && (
           <div className="flex items-start gap-2">
-            <div className="min-w-4 h-4">
-              🧳
-            </div>
+            <div className="min-w-4 h-4">💼</div>
             <p>
-              {fareDetail.includedCheckedBags.quantity} checked bag{fareDetail.includedCheckedBags.quantity !== 1 ? 's' : ''} included (50 lbs each)
+              Carry-on bag ({fareDetail.baggage.cabin.quantity}){' '}
+              {fareDetail.baggage.cabin.weight && (
+                <span>up to {fareDetail.baggage.cabin.weight} {fareDetail.baggage.cabin.weightUnit}</span>
+              )}
+            </p>
+          </div>
+        )}
+        {fareDetail.baggage.checked && (
+          <div className="flex items-start gap-2">
+            <div className="min-w-4 h-4">🧳</div>
+            <p>
+              {fareDetail.baggage.checked.quantity} checked bag{fareDetail.baggage.checked.quantity !== 1 ? 's' : ''}{' '}
+              {fareDetail.baggage.checked.weight && (
+                <span>up to {fareDetail.baggage.checked.weight} {fareDetail.baggage.checked.weightUnit}</span>
+              )}
             </p>
           </div>
         )}
@@ -59,13 +85,16 @@ const FlightSegmentDetails = ({
   showLayover = false,
   previousSegment = null
 }: {
-  segment: FlightSegment
-  fareDetail: FareDetail
-  airlines: Record<string, string>
-  aircrafts: Record<string, string>
-  locations: Record<string, Location>
-  showLayover?: boolean
-  previousSegment?: FlightSegment | null
+  segment: FlightSegment;
+  fareDetail: FareDetail;
+  airlines: Record<string, string>;
+  aircrafts: Record<string, string>;
+  locations: Record<string, {
+    cityCode: string;
+    countryCode: string;
+  }>;
+  showLayover?: boolean;
+  previousSegment?: FlightSegment | null;
 }) => {
   const departure = formatTime(segment.departure.at)
   const arrival = formatTime(segment.arrival.at)
@@ -77,48 +106,61 @@ const FlightSegmentDetails = ({
           <div className="border-t-2 w-full bg-muted-foreground" />
           <p className="text-sm">
             <span className="font-medium">Layover:</span> {calculateLayover(segment, previousSegment)} in{' '}
-            {locations[segment.departure.iataCode].cityCode}, {locations[segment.departure.iataCode]?.countryCode}
+            {locations[segment.departure.iataCode]?.cityCode}, {locations[segment.departure.iataCode]?.countryCode}
           </p>
           <div className="border-t-2 w-full bg-muted-foreground" />
         </>
       )}
       <div>
-        {/* Flight and Aircraft Info */}
         <div className="flex items-center justify-between">
           <div>
             <p className="font-medium text-sm">
               {airlines[segment.carrierCode]} {segment.number}
+              {segment.operating && segment.operating.carrierCode !== segment.carrierCode && (
+                <span className="text-xs ml-2 text-muted-foreground">
+                  Operated by {airlines[segment.operating.carrierCode]}
+                </span>
+              )}
             </p>
             <p className="text-xs">
-              <span className="font-medium">Aircraft:</span> {aircrafts[segment.aircraft.code]}
+              <span className="font-medium">Aircraft:</span> {segment.aircraft.name || aircrafts[segment.aircraft.code]}
             </p>
           </div>
           <div className="text-xs text-right">
             <p className="font-medium">{fareDetail.cabin} Class</p>
+            {fareDetail.class && <p className="text-muted-foreground">Class {fareDetail.class}</p>}
           </div>
         </div>
 
-        {/* Schedule Info */}
         <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
           <div className="space-y-1">
-            <p className="font-medium flex justify-start items-center gap-1"><PlaneTakeoff className="w-4 h-4" /> Departure</p>
+            <p className="font-medium flex justify-start items-center gap-1">
+              <PlaneTakeoff className="w-4 h-4" /> Departure
+            </p>
             <div className="space-y-0.5">
               <p>{departure.date}</p>
               <p className="text-sm font-medium">{departure.time}</p>
               <p>{segment.departure.iataCode}</p>
+              {segment.departure.terminal && (
+                <p className="text-muted-foreground">Terminal {segment.departure.terminal}</p>
+              )}
             </div>
           </div>
           <div className="space-y-1 text-right">
-            <p className="font-medium flex justify-end items-center gap-1"><PlaneLanding className="w-4 h-4" />Arrival</p>
+            <p className="font-medium flex justify-end items-center gap-1">
+              <PlaneLanding className="w-4 h-4" />Arrival
+            </p>
             <div className="space-y-0.5">
               <p>{arrival.date}</p>
               <p className="text-sm font-medium">{arrival.time}</p>
               <p>{segment.arrival.iataCode}</p>
+              {segment.arrival.terminal && (
+                <p className="text-muted-foreground">Terminal {segment.arrival.terminal}</p>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Baggage Information */}
         <BaggageInfo fareDetail={fareDetail} />
       </div>
     </div>
@@ -177,32 +219,54 @@ const FlightRoute = ({
 }
 
 const FlightCard = ({
-  id,
-  price,
-  itineraries,
-  fareDetailsBySegment,
-  airlines,
-  aircrafts,
-  airlineCodes,
-  oneWay,
+  offer,
   origin,
-  destination,
-  locations,
-  providerId,
-  refundable
-  
-}: FlightCardProps) => {
+  destination
+}: { offer: string, origin: string, destination: string}) => {
   const [isFirstDetailOpen, setIsFirstDetailOpen] = useState(false)
   const [isSecondDetailOpen, setIsSecondDetailOpen] = useState(false)
   const router = useRouter()
+  const flightOffer: FlightOffer  = JSON.parse(offer)
+  console.log(flightOffer);
+  const flightCardProps: FlightCardProps = {
+    providerId:flightOffer.providerId,
+    id:flightOffer.id!,
+    price:flightOffer.price.amount,
+    itineraries:flightOffer.itineraries,
+    fareDetailsBySegment:flightOffer.fareDetails,
+    airlines:flightOffer.dictionaries?.carriers || {},
+    aircrafts:flightOffer.dictionaries?.aircraft || {},
+    oneWay:flightOffer.itineraries.length === 1,
+    airlineCodes:[flightOffer.meta.validatingCarrier],
+    origin,
+    destination,
+    locations:flightOffer.dictionaries?.locations || {},
+  }
+
+  const {
+    providerId,
+    id,
+    price,
+    itineraries,
+    fareDetailsBySegment,
+    airlines,
+    aircrafts,
+    oneWay,
+    airlineCodes,
+    locations
+  } = flightCardProps
+
+
+  const handleBooking = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const encodedData = encodeURIComponent(JSON.stringify(flightOffer))
+    router.push(`/flight/booking?flightData=${encodedData}`)
+  }
 
   return (
-    <Card 
-    onClick={() => router.push(`/flight/booking/${id}`)}
-    className="w-full">
+    <Card className="w-full hover:shadow-lg transition-shadow duration-200">
       <CardContent className="p-6 flex flex-col gap-4">
         <div className="flex flex-col gap-2 md:gap-0">
-          {/* Airline Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <img
@@ -210,22 +274,28 @@ const FlightCard = ({
                 alt="Airline logo"
                 className="h-10 w-10 rounded-full"
               />
-              <div>
+              <div className="space-y-1">
                 <h3 className="font-medium">
                   {airlineCodes.length > 1 ? 'Multiple Airlines' : airlines[airlineCodes[0]]}
                 </h3>
+                <div className="flex gap-2">
+                  {providerId && (
+                    <Badge variant="outline" className="text-xs">
+                      {providerId}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
             <div className="text-right flex flex-col w-1/5 justify-center">
               <span className="text-sm text-muted-foreground">Price</span>
-              <p className="text-lg font-bold">${price}</p>
+              <p className="text-lg font-bold">${price.toFixed(2)}</p>
               <span className="text-xs text-muted-foreground">
                 {oneWay ? 'One way' : 'Round trip'}
               </span>
             </div>
           </div>
 
-          {/* Outbound Flight */}
           <FlightRoute 
             itinerary={itineraries[0]} 
             origin={origin} 
@@ -234,40 +304,44 @@ const FlightCard = ({
 
           <div className="flex flex-row items-center justify-between">
             <div className="flex flex-col items-start">
-              <span className="text-xs text-muted-foreground">Carry-on included</span>
+              <span className="text-xs text-muted-foreground">
+                {fareDetailsBySegment[0].baggage.cabin?.quantity} carry-on included
+              </span>
               <Button
-                variant={null}
-                className="hover:text-third p-0 m-0 h-full no-underline"
-                onClick={() => setIsFirstDetailOpen(!isFirstDetailOpen)}
+                variant="ghost"
+                className="hover:text-third p-0 h-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsFirstDetailOpen(!isFirstDetailOpen);
+                }}
               >
                 <span className="flex items-center gap-2">
                   Flight Detail
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform ${
-                      isFirstDetailOpen ? 'rotate-180' : ''
-                    }`}
-                  />
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isFirstDetailOpen ? 'rotate-180' : ''}`} />
                 </span>
               </Button>
             </div>
-            {oneWay && <Button>Book Now</Button>}
+            {oneWay && (
+              <Button onClick={handleBooking}>
+                Book Now
+              </Button>
+            )}
           </div>
 
-          {/* Outbound Flight Details */}
           {isFirstDetailOpen && (
             <div className="border-t pt-4 mt-4">
               <div className="bg-fourth py-2 px-5">
                 <div className="flex flex-col gap-2">
-                  {itineraries[0].segments.map((segment, index) => (
+                  {itineraries[0].segments.map((segment, segmentIndex) => (
                     <FlightSegmentDetails
-                      key={`outbound-${index}`}
+                      key={`${id}-outbound-${segmentIndex}`} // Changed key to be unique
                       segment={segment}
-                      fareDetail={fareDetailsBySegment[index]}
+                      fareDetail={fareDetailsBySegment[segmentIndex]}
                       airlines={airlines}
                       aircrafts={aircrafts}
                       locations={locations}
-                      showLayover={index !== 0}
-                      previousSegment={index !== 0 ? itineraries[0].segments[index - 1] : null}
+                      showLayover={segmentIndex !== 0}
+                      previousSegment={segmentIndex !== 0 ? itineraries[0].segments[segmentIndex - 1] : null}
                     />
                   ))}
                 </div>
@@ -276,7 +350,6 @@ const FlightCard = ({
           )}
         </div>
 
-        {/* Return Flight */}
         {!oneWay && itineraries.length > 1 && (
           <div className="space-y-4 border-t pt-4">
             <FlightRoute 
@@ -287,47 +360,52 @@ const FlightCard = ({
             />
 
             <div className="flex flex-col items-start justify-between">
-              <span className="text-xs text-muted-foreground">Carry-on included</span>
+              <span className="text-xs text-muted-foreground">
+                {fareDetailsBySegment[itineraries[0].segments.length].baggage.cabin?.quantity} carry-on included
+              </span>
               <Button
-                variant={null}
-                className="hover:text-third p-0 m-0 h-full no-underline"
-                onClick={() => setIsSecondDetailOpen(!isSecondDetailOpen)}
+                variant="ghost"
+                className="hover:text-third p-0 h-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsSecondDetailOpen(!isSecondDetailOpen);
+                }}
               >
                 <span className="flex items-center gap-2">
                   Flight Detail
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform ${
-                      isSecondDetailOpen ? 'rotate-180' : ''
-                    }`}
-                  />
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isSecondDetailOpen ? 'rotate-180' : ''}`} />
                 </span>
               </Button>
             </div>
 
-            {/* Return Flight Details */}
-            {isSecondDetailOpen && (
+            {!oneWay && itineraries.length > 1 && isSecondDetailOpen && (
               <div className="border-t pt-4 mt-4">
                 <div className="bg-fourth py-2 px-5">
                   <div className="flex flex-col gap-2">
-                    {itineraries[1].segments.map((segment, index) => (
-                      <FlightSegmentDetails
-                        key={`return-${index}`}
-                        segment={segment}
-                        fareDetail={fareDetailsBySegment[itineraries[0].segments.length + index]}
-                        airlines={airlines}
-                        aircrafts={aircrafts}
-                        locations={locations}
-                        showLayover={index !== 0}
-                        previousSegment={index !== 0 ? itineraries[1].segments[index - 1] : null}
-                      />
-                    ))}
+                    {itineraries[1].segments.map((segment, segmentIndex) => {
+                      const fareDetailIndex = itineraries[0].segments.length + segmentIndex;
+                      return (
+                        <FlightSegmentDetails
+                          key={`${id}-return-${segmentIndex}`} // Changed key to be unique
+                          segment={segment}
+                          fareDetail={fareDetailsBySegment[fareDetailIndex]}
+                          airlines={airlines}
+                          aircrafts={aircrafts}
+                          locations={locations}
+                          showLayover={segmentIndex !== 0}
+                          previousSegment={segmentIndex !== 0 ? itineraries[1].segments[segmentIndex - 1] : null}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
               </div>
             )}
             
             <div className="flex items-center justify-end">
-              <Button>Book Now</Button>
+            <Button onClick={handleBooking}>
+                Book Now
+              </Button>
             </div>
           </div>
         )}

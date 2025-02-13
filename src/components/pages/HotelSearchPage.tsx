@@ -2,13 +2,14 @@
 
 import { HotelFilter } from "@/components/HotelFilter"
 import HotelSearch from "@/components/search/HotelSearch"
-import { useAmadeus } from "@/hooks/useAmadeus"
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { HotelCard } from "../HotelCard"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent } from "../ui/card"
+import { useHotel } from "@/hooks/useHotel"
+import { HotelOffer } from "@/types"
 
 interface HotelSearchPageProps {
     city: string
@@ -17,8 +18,14 @@ interface HotelSearchPageProps {
     adults: number
     rooms: number
     page: number
-    amenities?: Array<string>
-    ratings?: Array<string>
+    amenities?: string[]
+    ratings?: string[]
+    priceRange?: {
+      min?: number
+      max?: number
+    }
+    boardType?: string
+    paymentPolicy?: string
 }
 
 const HotelSearchPage = ({
@@ -30,42 +37,46 @@ const HotelSearchPage = ({
     page,
     amenities,
     ratings,
+    priceRange,
+    boardType,
+    paymentPolicy,
 }: HotelSearchPageProps) => {
-    const router = useRouter()
-    const searchParams = useSearchParams()
-    const { getHotels, hotels, isLoading } = useAmadeus()
-    const [error, setError] = useState<string | null>(null)
-    const [totalPages, setTotalPages] = useState(1)
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const { searchHotelOffers, hotelOffers, filteredHotels, isLoading, error } = useHotel();
+    const [totalPages, setTotalPages] = useState(1);
 
-    // Function to update URL with new page number
     const updatePageParam = (newPage: number) => {
-        const params = new URLSearchParams(searchParams.toString())
-        params.set('page', newPage.toString())
-        router.push(`/hotel/search?${params.toString()}`)
-    }
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('page', newPage.toString());
+        router.push(`/hotel/search?${params.toString()}`);
+    };
 
     useEffect(() => {
-        const fetchHotels =  () => {
-            getHotels(
+        const fetchHotels = async () => {
+            await searchHotelOffers({
                 city,
                 checkIn,
                 checkOut,
                 adults,
                 rooms,
-                page,
+                priceRange,
                 amenities,
-                ratings
-            )     
-        }
-        fetchHotels()
-    }, [city, checkIn, checkOut, adults, rooms, page, amenities, ratings])
+                ratings,
+                boardType,
+                paymentPolicy,
+                providerIds: ['serp']
+            });
+        };
+        fetchHotels();
+    }, [city, checkIn, checkOut, adults, rooms, amenities, ratings, priceRange, boardType, paymentPolicy]);
 
     useEffect(() => {
-        if (hotels?.length) {
-            // console.log(hotels)
-            setTotalPages(Math.ceil(hotels.length / 3)) // Since we're getting 3 hotels per page
+        if (filteredHotels?.length) {
+            setTotalPages(Math.ceil(filteredHotels.length / 3));
         }
-    }, [hotels])
+    }, [filteredHotels]);
+
 
     const Pagination = () => {
         const getPageNumbers = () => {
@@ -115,25 +126,18 @@ const HotelSearchPage = ({
     }
 
     const HotelResults = () => (
-        
         <div className="w-full flex flex-col gap-5">
-            {hotels.slice((page - 1) * 3, hotels.length > (page - 1) * 3 + 3 ? (page - 1) * 3 + 3 : hotels.length).map((hotel: any) => (
-                <HotelCard
-                    key={hotel.hotel.hotelId}
-                    name={hotel.hotel.name}
-                    location={hotel.hotel.cityCode}
-                    description={hotel.hotel.description}
-                    images={['/hero.png', '/hero.png', '/hero.png']}
-                    amenities={hotel.hotel.amenities}
-                    rating={hotel.rating}
-                    pricing={hotel.offers[0].price}
-                    badges={hotel.hotel.badges}
-                    refundable={hotel.offers[0]?.refundable}
-                />
-            ))}
+            {filteredHotels
+                .slice((page - 1) * 3, page * 3)
+                .map((hotel: HotelOffer) => (
+                    <HotelCard
+                        key={hotel.id}
+                        offer={hotel}
+                    />
+                ))}
             {totalPages > 1 && <Pagination />}
         </div>
-    )
+    );
 
     return (
         <>
@@ -157,7 +161,7 @@ const HotelSearchPage = ({
                     {error && <ErrorState message={error} />}
                     {isLoading ? (
                         <LoadingState />
-                    ) : hotels?.length > 0 ? (
+                    ) : filteredHotels?.length > 0 ? (
                         <HotelResults />
                     ) : (
                         <NoHotelsFound />
@@ -165,8 +169,9 @@ const HotelSearchPage = ({
                 </div>
             </div>
         </>
-    )
-}
+    );
+};
+
 
 // Component for loading state
 const LoadingState = () => (

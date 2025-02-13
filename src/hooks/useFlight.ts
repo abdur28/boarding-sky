@@ -1,19 +1,19 @@
-import { flightOffer, FlightSearchParams, Provider, ProviderTokens } from "@/types";
+import { FlightOffer, FlightSearchParams, Provider, ProviderTokens } from "@/types";
 import { create } from "zustand";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 interface FlightState {
-    flightOffers: flightOffer[];
-    filteredFlights: flightOffer[];
+    flightOffers: FlightOffer[];
+    filteredFlights: FlightOffer[];
     tokens: ProviderTokens;
     isLoading: boolean;
     error: string | null;
 
     getProviderToken: (providerId: string) => Promise<void>;
     searchFlightOffers: (params: FlightSearchParams) => Promise<void>;
-    setFilteredFlights: (flights: flightOffer[]) => void;
+    setFilteredFlights: (flights: FlightOffer[]) => void;
 } 
 
 export const useFlight = create<FlightState>((set, get) => ({
@@ -25,11 +25,11 @@ export const useFlight = create<FlightState>((set, get) => ({
 
     getProviderToken: async (providerId: string) => {
         set({ isLoading: true, error: null });
-        const { tokens } = get();
+        const tokens = get().tokens;
         const currentToken = tokens[providerId];
-        
+
         // Check if token exists and is not expired (with 1-minute buffer)
-        if (currentToken && Date.now() < currentToken.expiresAt - 60000) {
+        if (currentToken && Date.now() < currentToken.expiresAt - 300000) {
             return currentToken.token;
         }
     
@@ -81,7 +81,7 @@ export const useFlight = create<FlightState>((set, get) => ({
         set({ isLoading: true, error: null });
     
         try {
-            const { getProviderToken } = get();
+            const { getProviderToken} = get();
             
             if (params.providerIds && params.providerIds.length === 0) {
                 throw new Error('No providers selected');
@@ -92,7 +92,7 @@ export const useFlight = create<FlightState>((set, get) => ({
                 params.providerIds!.map(async (providerId) => {
                     try {
                         const token = await getProviderToken(providerId);
-                        console.log(`Got token for ${providerId}:`, token);
+                        set({ isLoading: true, error: null });
                         return { providerId, token, success: true };
                     } catch (error) {
                         console.error(`Failed to get token for ${providerId}:`, error);

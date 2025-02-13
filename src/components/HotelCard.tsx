@@ -1,66 +1,39 @@
 'use client'
 
-import { Heart } from 'lucide-react'
 import { useState } from "react"
-
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
+import { HotelOffer } from "@/types"
+import { useRouter } from "next/navigation"
 
 interface HotelCardProps {
-  name: string
-  location: string
-  description: string
-  images: string[]
-  amenities: string[]
-  rating: {
-    score: number
-    reviews: number
-  }
-  pricing: any
-  badges?: string[]
-  refundable?: boolean
+  offer: HotelOffer;
 }
 
-export function HotelCard({
-  name = "Gale Miami Hotel and Residences",
-  location = "Downtown Miami",
-  description = "Retreat to spacious rooms & condo-style suites with world-class amenities including our gym, spa, terrace pool, and restaurants.",
-  images = [
-    "/placeholder.svg?height=200&width=400",
-    "/placeholder.svg?height=200&width=400",
-  ],
-  amenities = ["Pool"],
-  rating = {
-    score: 8.6,
-    reviews: 139
-  },
-  pricing = {
-    original: 407,
-    current: 326,
-    discount: {
-      label: "Black Friday",
-      amount: 81
-    }
-  },
-  refundable = false
-}: HotelCardProps) {
-  const [isFavorite, setIsFavorite] = useState(false)
+export function HotelCard({ offer }: HotelCardProps) {
+  const router = useRouter();
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  const handleBooking = () => {
+    const encodedData = encodeURIComponent(JSON.stringify(offer));
+    router.push(`/hotel/booking?hotelData=${encodedData}`);
+  };
 
   return (
     <Card className="w-full max-w-6xl overflow-hidden">
       <CardContent className="p-0">
         <div className="flex flex-col md:flex-row gap-4 h-full w-full justify-center items-center">
-          <div className="w-full md:w-[500px] md:h-[300px] h-[300px] ">
+          <div className="w-full md:w-[500px] md:h-[300px] h-[300px]">
             <Carousel className="w-full h-full flex justify-center items-center overflow-hidden">
               <CarouselContent>
-                {images.map((image, index) => (
+                {offer.images.map((image, index) => (
                   <CarouselItem key={index}>
                     <div className="h-full w-full">
                       <img
-                        src={image}
-                        alt={`${name} - Image ${index + 1}`}
+                        src={image.thumbnail}
+                        alt={`${offer.name} - Image ${index + 1}`}
                         className="object-cover w-full h-full"
                       />
                     </div>
@@ -75,21 +48,26 @@ export function HotelCard({
           <div className="flex flex-col p-4">
             <div className="space-y-4">
               <div>
-                <h3 className="text-xl font-semibold">{name}</h3>
-                <p className="text-blue-600">{location}</p>
+                <h3 className="text-xl font-semibold">{offer.name}</h3>
+                <p className="text-blue-600">{offer.location.address}</p>
               </div>
 
-              <div className="flex gap-2">
-                {amenities.map((amenity, index) => (
+              <div className="flex flex-wrap gap-2">
+                {offer.amenities.slice(0, 3).map((amenity, index) => (
                   <Badge key={index} variant="secondary" className="bg-gray-100 text-gray-600 hover:bg-gray-100">
                     {amenity}
                   </Badge>
                 ))}
+                {offer.amenities.length > 3 && (
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-600 hover:bg-gray-100">
+                    +{offer.amenities.length - 3} more
+                  </Badge>
+                )}
               </div>
 
-              <p className="text-sm text-gray-600">{description}</p>
+              <p className="text-sm text-gray-600">{offer.description}</p>
 
-              {refundable && (
+              {offer.refundable && (
                 <div className="space-y-1">
                   <p className="text-green-600 font-medium">Fully refundable</p>
                   <p className="text-sm text-gray-600">Reserve now, pay later</p>
@@ -99,29 +77,42 @@ export function HotelCard({
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <Badge className="bg-green-600 hover:bg-green-600 p-2">
-                    {rating === null ? '9.6' : rating.score}
+                    {offer.rating.overall.toFixed(1)}
                   </Badge>
                   <div>
-                    <span className="font-medium">Excellent</span>
-                    <p className="text-sm text-gray-600">{rating === null ? '1390' : rating.reviews} reviews</p>
+                    <span className="font-medium">
+                      {offer.rating.overall >= 9 ? 'Exceptional' :
+                       offer.rating.overall >= 8 ? 'Excellent' :
+                       offer.rating.overall >= 7 ? 'Very Good' :
+                       offer.rating.overall >= 6 ? 'Good' : 'Fair'}
+                    </span>
+                    <p className="text-sm text-gray-600">{offer.rating.totalReviews} reviews</p>
                   </div>
                 </div>
 
                 <div className="ml-auto text-right">
-                  {pricing.discount && (
+                  {offer.price.discount && (
                     <Badge variant="secondary" className="mb-1 bg-slate-900 text-white hover:bg-slate-900">
-                      {pricing.discount.label} ${pricing.discount.amount} off
+                      {offer.price.discount.label} ${offer.price.discount.amount} off
                     </Badge>
                   )}
                   <div className="space-y-1">
                     <div className="flex items-center justify-end gap-2">
-                      <span className="text-sm line-through">${pricing.total}</span>
-                      <span className="text-2xl font-bold">${pricing.total}</span>
+                      {offer.price.original && (
+                        <span className="text-sm line-through">
+                          ${offer.price.original}
+                        </span>
+                      )}
+                      <span className="text-2xl font-bold">
+                        ${offer.price.current}
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-600">includes taxes & fees</p>
+                    <p className="text-sm text-gray-600">
+                      {offer.price.includesTaxes ? 'includes taxes & fees' : 'plus taxes & fees'}
+                    </p>
                   </div>
                   <div className='mt-4'>
-                  <Button >Book Now</Button>
+                    <Button onClick={handleBooking}>Book Now</Button>
                   </div>
                 </div>
               </div>
@@ -130,5 +121,5 @@ export function HotelCard({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

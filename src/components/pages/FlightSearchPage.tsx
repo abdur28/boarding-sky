@@ -3,12 +3,24 @@
 import FlightCard from "@/components/FlightCard"
 import { FlightFilter } from "@/components/FlightFilter"
 import FlightSearch from "@/components/search/FlightSearch"
-import { useAmadeus } from "@/hooks/useAmadeus"
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Card, CardContent } from "../ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { useFlight } from "@/hooks/useFlight"
+import { FlightOffer } from "@/types"
+
+interface FlightSearchPageProps {
+    providerIds: Array<string>
+    origin: string
+    destination: string
+    adults: number
+    children: number
+    infants: number
+    travelClass: string
+    departureDate: string
+    returnDate?: string
+}
 
 const FlightSearchPage = ({
     providerIds,
@@ -20,84 +32,47 @@ const FlightSearchPage = ({
     travelClass, 
     departureDate, 
     returnDate,
-}:{
-    providerIds: Array<string>,
-    origin: string,
-    destination: string,
-    adults: number,
-    children: number,
-    infants: number,
-    travelClass: string,
-    departureDate: string,
-    returnDate?: string,
-}) => {
-    const { flightOfferSearch, flightsOffers } = useAmadeus()
-    const [offers, setOffers] = useState<any>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-    const [airlines, setAirlines] = useState<any>({})
-    const [aircrafts, setAircrafts] = useState<any>({})
-    const [locations, setLocations] = useState<any>([])
-    const [filteredOffers, setFilteredOffers] = useState<any>([])
-
-    const {searchFlightOffers,flightOffers, isLoading} = useFlight()
-
+}: FlightSearchPageProps) => {
+    const { searchFlightOffers, flightOffers, filteredFlights, setFilteredFlights, isLoading, error } = useFlight()
     const [page, setPage] = useState(1)
     const [limit] = useState(10)
     const [totalPages, setTotalPages] = useState(1)
 
     useEffect(() => {
         const fetchFlights = async () => {
-            try {
-                setLoading(true)
-                setError(null)
-                await searchFlightOffers({                    
-                    providerIds: ['amadeus'],
-                    origin,
-                    destination,
-                    adults,
-                    children,
-                    infants,
-                    travelClass,
-                    departureDate,
-                    returnDate
-                })
-                console.log('Flight offers:', flightOffers)
-            } catch (err) {
-                setError('Failed to fetch flight offers. Please try again.')
-                console.error('Flight search error:', err)
-            }
+            console.log({ providerIds, origin, destination, adults, children, infants, travelClass, departureDate, returnDate });
+            await searchFlightOffers({                    
+                providerIds: ['amadeus'],
+                origin,
+                destination,
+                adults,
+                children,
+                infants,
+                travelClass,
+                departureDate,
+                returnDate
+            })
         }
 
         fetchFlights()
-    }, [origin, destination, adults, children, infants, travelClass, departureDate, returnDate])
+    }, [
+        searchFlightOffers,
+        providerIds,
+        origin,
+        destination,
+        adults,
+        children,
+        infants,
+        travelClass,
+        departureDate,
+        returnDate
+    ])
 
     useEffect(() => {
-        if (flightsOffers) {
-            try {
-                setOffers(flightsOffers.data || [])
-                setFilteredOffers(flightsOffers.data || [])
-                setAirlines(flightsOffers.dictionaries?.carriers || {})
-                setAircrafts(flightsOffers.dictionaries?.aircraft || {})
-                setLocations(flightsOffers.dictionaries?.locations || {})
-            } catch (err) {
-                setError('Error processing flight data')
-                console.error('Data processing error:', err)
-            }
-        }
-    }, [flightsOffers])
-
-    useEffect(() => {
-        if (!isLoading) {
-            setLoading(false)
-        }
-    }, [isLoading])
-
-    useEffect(() => {
-        const total = filteredOffers.length > 0 ? Math.ceil(filteredOffers.length / limit) : 1
+        const total = filteredFlights.length > 0 ? Math.ceil(filteredFlights.length / limit) : 1
         setTotalPages(total)
         setPage(1)
-    }, [filteredOffers, limit])
+    }, [filteredFlights, limit])
 
     const LoadingState = () => (
         <div className="w-full min-h-[400px] flex flex-col items-center justify-center gap-4">
@@ -122,7 +97,7 @@ const FlightSearchPage = ({
 
     const Pagination = () => {
         const getPageNumbers = () => {
-            let pages = []
+            const pages: number[] = []
             const maxPages = Math.min(5, totalPages)
             let start = page > 2 ? page - 2 : 1
             start = Math.min(start, totalPages - maxPages + 1)
@@ -176,27 +151,19 @@ const FlightSearchPage = ({
     const FlightResults = () => {
         const startIndex = (page - 1) * limit
         const endIndex = page * limit
-        const currentPageOffers = filteredOffers.slice(startIndex, endIndex)
+        const currentPageOffers = filteredFlights.slice(startIndex, endIndex)
 
         return (
             <div className="w-full flex flex-col gap-5">
-                {currentPageOffers.map((offer: any) => (
+                {currentPageOffers.map((offer: FlightOffer) => (
                     <FlightCard
-                        id={offer.id}
                         key={offer.id}
-                        price={offer.price?.grandTotal}
-                        itineraries={offer.itineraries}
-                        fareDetailsBySegment={offer.travelerPricings[0].fareDetailsBySegment}
-                        airlines={airlines}
-                        aircrafts={aircrafts}
-                        oneWay={offer.itineraries.length === 1}
-                        airlineCodes={offer.validatingAirlineCodes}
+                        offer={JSON.stringify(offer)}
                         origin={origin}
                         destination={destination}
-                        locations={locations}
                     />
                 ))}
-                {filteredOffers.length > limit && <Pagination />}
+                {filteredFlights.length > limit && <Pagination />}
             </div>
         )
     }
@@ -217,9 +184,8 @@ const FlightSearchPage = ({
             <div className="max-w-7xl w-full relative flex flex-col lg:flex-row gap-10 lg:gap-5 justify-center px-5 mb-10">
                 <div className="w-full lg:w-1/4 lg:sticky top-20 h-max">
                     <FlightFilter
-                        offers={offers}
-                        setFilteredOffers={setFilteredOffers}
-                        airlines={airlines}
+                        offers={flightOffers}
+                        setFilteredOffers={setFilteredFlights}
                         loading={isLoading}
                     />
                 </div>
@@ -228,7 +194,7 @@ const FlightSearchPage = ({
                     {error && <ErrorState message={error} />}
                     {isLoading ? (
                         <LoadingState />
-                    ) : filteredOffers.length > 0 ? (
+                    ) : filteredFlights.length > 0 ? (
                         <FlightResults />
                     ) : (
                         <NoFlightsFound />
