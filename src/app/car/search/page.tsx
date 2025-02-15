@@ -5,16 +5,21 @@ export default function SearchPage({
   searchParams 
 }: { 
   searchParams: { 
-    location: string
-    pickupDate: string
-    returnDate: string
-    [key: string]: string 
+    pickUpLocation: string
+    dropOffLocation?: string
+    pickUpDate: string
+    dropOffDate: string
+    page: number
+    priceRange?: {
+      min?: number
+      max?: number
+    }
   }
 }) {
   return (
     <div className="w-full h-full flex flex-col justify-center items-center">
       <Header title="Car Rental Search" />
-      <CarSearchPage />
+      <CarSearchPage {...searchParams} />
     </div>
   )
 }

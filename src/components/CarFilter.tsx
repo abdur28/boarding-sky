@@ -1,7 +1,7 @@
 'use client'
 
 import { ChevronDown } from 'lucide-react'
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Slider } from "@/components/ui/slider"
 
 interface FilterSection {
   id: string
@@ -18,10 +19,11 @@ interface FilterSection {
 
 interface FilterState {
   priceRange: string
-  carTypes: string[]
-  specifications: string[]
-  transmission: string
-  fuelType: string
+  transmission: string[]
+  category: string[]
+  features: string[]
+  fuelType: string[]
+  vendor: string[]
 }
 
 interface PriceRange {
@@ -29,35 +31,44 @@ interface PriceRange {
   max: string
 }
 
-const CAR_TYPES = {
-  'ECONOMY': "Economy",
-  'COMPACT': "Compact",
-  'MIDSIZE': "Midsize",
-  'FULLSIZE': "Fullsize",
-  'SUV': "SUV",
-  'LUXURY': "Luxury",
-  'VAN': "Van/Minivan",
-  'CONVERTIBLE': "Convertible"
+const CATEGORIES = {
+  'ECONOMY': 'Economy',
+  'COMPACT': 'Compact',
+  'INTERMEDIATE': 'Intermediate',
+  'STANDARD': 'Standard',
+  'FULLSIZE': 'Full Size',
+  'PREMIUM': 'Premium',
+  'LUXURY': 'Luxury',
+  'SUV': 'SUV',
+  'VAN': 'Van',
+  'PICKUP': 'Pickup'
 } as const
 
-const SPECIFICATIONS = {
-  'AIR_CONDITIONING': "Air Conditioning",
-  'AUTOMATIC': "Automatic Transmission",
-  'MANUAL': "Manual Transmission",
-  'BLUETOOTH': "Bluetooth",
-  'GPS': "GPS Navigation",
-  'BACKUP_CAMERA': "Backup Camera",
-  'CRUISE_CONTROL': "Cruise Control",
-  'CHILD_SEAT': "Child Seat Compatible",
-  'UNLIMITED_MILEAGE': "Unlimited Mileage",
-  'USB_PORT': "USB Port",
+const TRANSMISSIONS = {
+  'AUTOMATIC': 'Automatic',
+  'MANUAL': 'Manual'
+} as const
+
+const FEATURES = {
+  'AIR_CONDITIONING': 'Air Conditioning',
+  'BLUETOOTH': 'Bluetooth',
+  'GPS': 'GPS Navigation',
+  'CRUISE_CONTROL': 'Cruise Control',
+  'PARKING_SENSORS': 'Parking Sensors',
+  'BACKUP_CAMERA': 'Backup Camera',
+  'THIRD_ROW_SEATS': 'Third Row Seats',
+  'SKI_RACK': 'Ski Rack',
+  'BIKE_RACK': 'Bike Rack',
+  'CHILD_SEAT': 'Child Seat',
+  'USB': 'USB Port',
+  'WIFI': 'WiFi'
 } as const
 
 const FUEL_TYPES = {
-  'PETROL': "Petrol",
-  'DIESEL': "Diesel",
-  'HYBRID': "Hybrid",
-  'ELECTRIC': "Electric"
+  'PETROL': 'Petrol',
+  'DIESEL': 'Diesel',
+  'HYBRID': 'Hybrid',
+  'ELECTRIC': 'Electric'
 } as const
 
 const parsePriceRange = (range: string | null): PriceRange => {
@@ -80,44 +91,29 @@ export function CarFilter({ loading = false }: { loading?: boolean }) {
   const [priceRange, setPriceRange] = useState<PriceRange>(initialPriceRange)
   const [filters, setFilters] = useState<FilterState>({
     priceRange: searchParams.get('priceRange') || '',
-    carTypes: searchParams.get('carTypes')?.split(',').filter(Boolean) || [],
-    specifications: searchParams.get('specifications')?.split(',').filter(Boolean) || [],
-    transmission: searchParams.get('transmission') || '',
-    fuelType: searchParams.get('fuelType') || '',
+    transmission: searchParams.get('transmission')?.split(',').filter(Boolean) || [],
+    category: searchParams.get('category')?.split(',').filter(Boolean) || [],
+    features: searchParams.get('features')?.split(',').filter(Boolean) || [],
+    fuelType: searchParams.get('fuelType')?.split(',').filter(Boolean) || [],
+    vendor: searchParams.get('vendor')?.split(',').filter(Boolean) || []
   })
 
   const updateURLParams = (newFilters: FilterState) => {
     const params = new URLSearchParams(searchParams.toString())
 
-    if (newFilters.priceRange) {
-      params.set('priceRange', newFilters.priceRange)
-    } else {
-      params.delete('priceRange')
-    }
-
-    if (newFilters.carTypes.length > 0) {
-      params.set('carTypes', newFilters.carTypes.join(','))
-    } else {
-      params.delete('carTypes')
-    }
-
-    if (newFilters.specifications.length > 0) {
-      params.set('specifications', newFilters.specifications.join(','))
-    } else {
-      params.delete('specifications')
-    }
-
-    if (newFilters.transmission) {
-      params.set('transmission', newFilters.transmission)
-    } else {
-      params.delete('transmission')
-    }
-
-    if (newFilters.fuelType) {
-      params.set('fuelType', newFilters.fuelType)
-    } else {
-      params.delete('fuelType')
-    }
+    Object.entries(newFilters).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        if (value.length > 0) {
+          params.set(key, value.join(','))
+        } else {
+          params.delete(key)
+        }
+      } else if (value) {
+        params.set(key, value)
+      } else {
+        params.delete(key)
+      }
+    })
 
     params.set('page', '1')
     router.push(`/car/search?${params.toString()}`)
@@ -131,9 +127,9 @@ export function CarFilter({ loading = false }: { loading?: boolean }) {
     }))
   }
 
-  const handleCheckboxFilter = (type: 'carTypes' | 'specifications', value: string) => {
+  const handleCheckboxFilter = (type: keyof FilterState, value: string) => {
     setFilters(prev => {
-      const currentValues = prev[type]
+      const currentValues = prev[type] as string[]
       const newFilters = {
         ...prev,
         [type]: currentValues.includes(value)
@@ -142,13 +138,6 @@ export function CarFilter({ loading = false }: { loading?: boolean }) {
       }
       return newFilters
     })
-  }
-
-  const handleRadioFilter = (type: 'transmission' | 'fuelType', value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      [type]: prev[type] === value ? '' : value
-    }))
   }
 
   const handleApplyFilters = () => {
@@ -164,17 +153,19 @@ export function CarFilter({ loading = false }: { loading?: boolean }) {
     setPriceRange({ min: '', max: '' })
     setFilters({
       priceRange: '',
-      carTypes: [],
-      specifications: [],
-      transmission: '',
-      fuelType: ''
+      transmission: [],
+      category: [],
+      features: [],
+      fuelType: [],
+      vendor: []
     })
     updateURLParams({
       priceRange: '',
-      carTypes: [],
-      specifications: [],
-      transmission: '',
-      fuelType: ''
+      transmission: [],
+      category: [],
+      features: [],
+      fuelType: [],
+      vendor: []
     })
   }
 
@@ -228,16 +219,16 @@ export function CarFilter({ loading = false }: { loading?: boolean }) {
       ),
     },
     {
-      id: 'carTypes',
-      title: 'Car Types',
+      id: 'category',
+      title: 'Vehicle Category',
       content: (
         <div className="space-y-2">
-          {Object.entries(CAR_TYPES).map(([key, name]) => (
+          {Object.entries(CATEGORIES).map(([key, name]) => (
             <div key={key} className="flex items-center space-x-2">
               <Checkbox 
                 id={key}
-                checked={filters.carTypes.includes(key)}
-                onCheckedChange={() => handleCheckboxFilter('carTypes', key)}
+                checked={filters.category.includes(key)}
+                onCheckedChange={() => handleCheckboxFilter('category', key)}
                 disabled={loading}
               />
               <Label htmlFor={key}>{name}</Label>
@@ -247,16 +238,35 @@ export function CarFilter({ loading = false }: { loading?: boolean }) {
       ),
     },
     {
-      id: 'specifications',
-      title: 'Specifications',
+      id: 'transmission',
+      title: 'Transmission',
       content: (
         <div className="space-y-2">
-          {Object.entries(SPECIFICATIONS).map(([key, name]) => (
+          {Object.entries(TRANSMISSIONS).map(([key, name]) => (
             <div key={key} className="flex items-center space-x-2">
               <Checkbox 
                 id={key}
-                checked={filters.specifications.includes(key)}
-                onCheckedChange={() => handleCheckboxFilter('specifications', key)}
+                checked={filters.transmission.includes(key)}
+                onCheckedChange={() => handleCheckboxFilter('transmission', key)}
+                disabled={loading}
+              />
+              <Label htmlFor={key}>{name}</Label>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      id: 'features',
+      title: 'Features',
+      content: (
+        <div className="space-y-2">
+          {Object.entries(FEATURES).map(([key, name]) => (
+            <div key={key} className="flex items-center space-x-2">
+              <Checkbox 
+                id={key}
+                checked={filters.features.includes(key)}
+                onCheckedChange={() => handleCheckboxFilter('features', key)}
                 disabled={loading}
               />
               <Label htmlFor={key}>{name}</Label>
@@ -269,38 +279,39 @@ export function CarFilter({ loading = false }: { loading?: boolean }) {
       id: 'fuelType',
       title: 'Fuel Type',
       content: (
-        <RadioGroup value={filters.fuelType} className="space-y-2">
+        <div className="space-y-2">
           {Object.entries(FUEL_TYPES).map(([key, name]) => (
             <div key={key} className="flex items-center space-x-2">
-              <RadioGroupItem 
-                value={key}
-                id={`fuel-${key}`}
-                onClick={() => handleRadioFilter('fuelType', key)}
+              <Checkbox 
+                id={key}
+                checked={filters.fuelType.includes(key)}
+                onCheckedChange={() => handleCheckboxFilter('fuelType', key)}
                 disabled={loading}
               />
-              <Label htmlFor={`fuel-${key}`}>{name}</Label>
+              <Label htmlFor={key}>{name}</Label>
             </div>
           ))}
-        </RadioGroup>
+        </div>
       ),
-    }
+    },
   ]
 
   const hasActiveFilters = () => {
     return (
       priceRange.min !== '' ||
       priceRange.max !== '' ||
-      filters.carTypes.length > 0 ||
-      filters.specifications.length > 0 ||
-      filters.transmission !== '' ||
-      filters.fuelType !== ''
+      filters.transmission.length > 0 ||
+      filters.category.length > 0 ||
+      filters.features.length > 0 ||
+      filters.fuelType.length > 0 ||
+      filters.vendor.length > 0
     )
   }
 
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Filter Cars</CardTitle>
+        <CardTitle>Filter Search</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {filterSections.map(section => (

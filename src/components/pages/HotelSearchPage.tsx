@@ -130,9 +130,14 @@ const HotelSearchPage = ({
             {filteredHotels
                 .slice((page - 1) * 3, page * 3)
                 .map((hotel: HotelOffer) => (
-                    <HotelCard
-                        key={hotel.id}
-                        offer={hotel}
+                    <HotelCard 
+                    key={hotel.id}
+                    offer={hotel}
+                    searchParams={{
+                        checkIn: "2024-02-14",
+                        checkOut: "2024-02-15",
+                        adults: 2
+                    }}
                     />
                 ))}
             {totalPages > 1 && <Pagination />}

@@ -1,360 +1,426 @@
-// app/api/[providerId]/hotel-offers/route.ts
+// import { NextResponse } from "next/server";
+// import { unstable_noStore as noStore } from "next/cache";
+// import { HotelOffer, HotelOfferDetails, SerpApiHotelOffer } from "@/types";
+
+// export const dynamic = 'force-dynamic';
+// export const revalidate = 0;
+
+// const SERP_API_KEY = process.env.SERP_API_KEY;
+// const BASE_URL = "https://serpapi.com/search.json";
+
+// export async function POST(req: Request) {
+//     noStore();
+//     try {
+//         const {
+//             propertyToken,
+//             q = "Hotels", // Default search query
+//             checkIn,
+//             checkOut,
+//             adults = 2,
+//             currency = "USD",
+//         } = await req.json();
+
+//         if (!propertyToken) {
+//             throw new Error('Property token is required');
+//         }
+
+//         // Construct query parameters
+//         const params = new URLSearchParams({
+//             engine: "google_hotels",
+//             q: q,
+//             property_token: propertyToken,
+//             check_in_date: checkIn,
+//             check_out_date: checkOut,
+//             adults: adults.toString(),
+//             currency: currency,
+//             gl: "us",
+//             hl: "en",
+//             api_key: SERP_API_KEY!,
+//         });
+
+//         const response = await fetch(`${BASE_URL}?${params.toString()}`);
+
+//         if (!response.ok) {
+//             throw new Error(`SerpAPI request failed with status ${response.status}`);
+//         }
+
+//         const data = await response.json();
+
+//         // Transform to match our HotelOfferDetails type
+//         const hotelDetails: HotelOfferDetails = {
+//             type: data.type === 'vacation rental' ? 'vacation_rental' : 'hotel',
+//             id: propertyId,
+//             propertyId: propertyId,
+//             name: data.name,
+//             description: data.description,
+//             rooms: data.featured_prices?.[0]?.rooms?.map((room: any) => ({
+//                 id: `${propertyId}-${room.name.toLowerCase().replace(/\s+/g, '-')}`,
+//                 name: room.name,
+//                 maxOccupancy: room.num_guests,
+//                 amenities: [], // Room-specific amenities if available
+//                 images: room.images?.map((img: string) => ({
+//                     url: img,
+//                     alt: `${room.name} - ${data.name}`
+//                 })) || [],
+//                 price: {
+//                     amount: room.rate_per_night.extracted_lowest,
+//                     currency: currency,
+//                     breakdown: {
+//                         baseRate: room.rate_per_night.extracted_before_taxes_fees,
+//                         taxes: room.rate_per_night.extracted_lowest - room.rate_per_night.extracted_before_taxes_fees,
+//                         fees: 0 // If available from API
+//                     }
+//                 },
+//                 cancellationPolicy: data.prices?.[0]?.free_cancellation ? {
+//                     isCancellable: true,
+//                     deadline: `${data.prices[0].free_cancellation_until_date} ${data.prices[0].free_cancellation_until_time || ''}`
+//                 } : {
+//                     isCancellable: false
+//                 }
+//             })) || [],
+//             availableRooms: data.numberOfBookableSeats,
+//             bookingOptions: {
+//                 paymentTypes: [],
+//                 guarantee: {
+//                     required: data.prices?.[0]?.deposit_required || false,
+//                     amount: data.prices?.[0]?.deposit_amount,
+//                     currency: currency
+//                 }
+//             }
+//         };
+
+//         // Transform to match our SerpApiHotelOffer type for the overview
+//         const hotelOffer: SerpApiHotelOffer = {
+//             id: propertyId,
+//             provider: 'serpapi',
+//             type: data.type === 'vacation rental' ? 'apartment' : 'hotel',
+//             name: data.name,
+//             description: data.description,
+//             location: {
+//                 latitude: data.gps_coordinates.latitude,
+//                 longitude: data.gps_coordinates.longitude,
+//                 address: data.address,
+//             },
+//             hotelClass: data.extracted_hotel_class,
+//             checkIn: data.check_in_time,
+//             checkOut: data.check_out_time,
+//             amenities: data.amenities || [],
+//             images: data.images.map((img: any) => ({
+//                 thumbnail: img.thumbnail,
+//                 original: img.original_image,
+//                 alt: `${data.name} - Hotel Image`
+//             })),
+//             price: {
+//                 current: data.rate_per_night.extracted_before_taxes_fees,
+//                 original: data.rate_per_night.extracted_lowest,
+//                 currency: currency,
+//                 beforeTaxes: data.rate_per_night.extracted_before_taxes_fees,
+//                 includesTaxes: true,
+//                 ...(data.deal && {
+//                     discount: {
+//                         label: data.deal_description || "Special Offer",
+//                         amount: data.rate_per_night.extracted_lowest - data.rate_per_night.extracted_before_taxes_fees,
+//                         percentage: parseFloat(data.deal.match(/\d+/)[0])
+//                     }
+//                 })
+//             },
+//             rating: {
+//                 overall: data.overall_rating,
+//                 totalReviews: data.reviews,
+//                 location: data.location_rating,
+//                 breakdown: data.reviews_breakdown?.map((rb: any) => ({
+//                     name: rb.name,
+//                     description: rb.description,
+//                     totalMentions: rb.total_mentioned,
+//                     positive: rb.positive,
+//                     negative: rb.negative,
+//                     neutral: rb.neutral,
+//                 }))
+//             },
+//             brand: data.featured_prices?.[0]?.logo ? {
+//                 name: data.featured_prices[0].source,
+//                 logo: data.featured_prices[0].logo,
+//             } : undefined,
+//             nearbyPlaces: data.nearby_places?.map((place: any) => ({
+//                 name: place.name,
+//                 category: place.category,
+//                 rating: place.rating,
+//                 reviews: place.reviews,
+//                 transportations: place.transportations,
+//             })),
+//             refundable: data.prices?.[0]?.free_cancellation || false,
+//             sponsored: data.sponsored || false,
+//             propertyToken: propertyId,
+//             serpapi_property_details_link: data.serpapi_property_details_link,
+//             meta: {
+//                 typicalPriceRange: data.typical_price_range,
+//                 ecoCertified: data.eco_certified,
+//                 dealDescription: data.deal_description
+//             }
+//         };
+
+//         return NextResponse.json({
+//             offer: hotelOffer,
+//             details: hotelDetails,
+//             success: true,
+//         });
+
+//     } catch (error) {
+//         console.error('Error in hotel-offer:', error);
+//         return NextResponse.json(
+//             {
+//                 error: error instanceof Error ? error.message : 'Failed to fetch hotel offer',
+//                 success: false,
+//             },
+//             { status: 500 }
+//         );
+//     }
+// }
+
 import { NextResponse } from "next/server";
 import { unstable_noStore as noStore } from "next/cache";
-import { HotelOffer } from "@/types";
+import { HotelOffer, HotelOfferDetails, SerpApiHotelOffer } from "@/types";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-const SERP_API_KEY = process.env.SERP_API_KEY;
-const BASE_URL = "https://serpapi.com/search.json";
-
-export async function POST(req: Request, { params }: { params: { providerId: string } }) {
+export async function POST(req: Request) {
     noStore();
-    const EXAMPLE_HOTELS: HotelOffer[] = [
-        {
-            id: "hotel_1",
-            type: "hotel",
-            name: "Hilton Bali Resort",
-            description: "This sprawling, upscale resort on a lush cliff is 3 km from Geger Beach and 15 km from Garuda Wisnu Kencana.",
+    try {
+        const mockHotelOffer: SerpApiHotelOffer = {
+            id: "mock-hotel-1",
+            provider: 'serpapi',
+            type: 'hotel',
+            name: "Grand Luxury Resort & Spa",
+            description: "Discover unparalleled luxury at our beachfront resort, featuring world-class amenities including infinity pools, private beach access, and award-winning restaurants. Each elegantly appointed room offers stunning ocean views and modern conveniences.",
             location: {
                 latitude: -8.8256848,
-                longitude: 115.21867449999999,
-                address: "Jl. Raya Nusa Dua Selatan, Benoa, Kec. Kuta Sel., Kabupaten Badung, Bali 80361, Indonesia",
+                longitude: 115.2186745,
+                address: "Jl. Luxury Beach Road 123, Paradise Island",
+                cityCode: "DPS",
+                countryCode: "ID"
             },
             hotelClass: 5,
-            checkIn: "3:00 PM",
-            checkOut: "12:00 PM",
+            checkIn: "15:00",
+            checkOut: "12:00",
             amenities: [
                 "Free Wi-Fi",
-                "Free parking",
-                "Pools",
-                "Hot tub",
-                "Air conditioning",
-                "Fitness centre",
+                "Infinity Pool",
                 "Spa",
-                "Beach access",
-                "Bar",
-                "Restaurant",
+                "Beach Access",
+                "Fitness Center",
+                "24/7 Room Service",
+                "Multiple Restaurants",
+                "Business Center",
+                "Kids Club",
+                "Concierge Service"
             ],
             images: [
                 {
-                    thumbnail: "/hero.png",
-                    original: "/hero.png",
+                    thumbnail: "/api/placeholder/400/300",
+                    original: "/api/placeholder/1200/900",
+                    alt: "Luxury Resort Main View"
                 },
                 {
-                    thumbnail: "/hero.png",
-                    original: "/hero.png",
+                    thumbnail: "/api/placeholder/400/300",
+                    original: "/api/placeholder/1200/900",
+                    alt: "Infinity Pool"
                 },
+                {
+                    thumbnail: "/api/placeholder/400/300",
+                    original: "/api/placeholder/1200/900",
+                    alt: "Deluxe Room"
+                }
             ],
             price: {
-                current: 203,
-                original: 219,
+                current: 350,
+                original: 450,
                 currency: "USD",
-                beforeTaxes: 168,
+                beforeTaxes: 320,
                 includesTaxes: true,
                 discount: {
-                    label: "Member rate, save 15%",
-                    amount: 16,
+                    label: "Special Offer",
+                    amount: 100,
+                    percentage: 22
                 }
-            },
-            rating: {
-                overall: 4.6,
-                totalReviews: 3614,
-                location: 4.2,
-                breakdown: [
-                    {
-                        name: "Property",
-                        description: "Property",
-                        totalMentions: 605,
-                        positive: 534,
-                        negative: 44,
-                        neutral: 27,
-                    },
-                    {
-                        name: "Service",
-                        description: "Service",
-                        totalMentions: 599,
-                        positive: 507,
-                        negative: 74,
-                        neutral: 18,
-                    },
-                ]
-            },
-            brand: {
-                name: "Hilton",
-                logo: "/hero.png",
-            },
-            nearbyPlaces: [
-                {
-                    name: "Nusa Dua Beach",
-                    category: "Beach",
-                    transportations: [
-                        {
-                            type: "Walking",
-                            duration: "10 min"
-                        }
-                    ],
-                    rating: 4.5,
-                    reviews: 1200,
-                }
-            ],
-            meta: {
-                sustainabilityInfo: {
-                    ecoCertified: true,
-                },
-                lastUpdated: new Date().toISOString(),
-                typicalPriceRange: {
-                    min: 180,
-                    max: 300,
-                },
-                deal: {
-                    type: "Limited time offer",
-                    description: "Save 15% with member rate"
-                }
-            }
-        },
-        {
-            id: "hotel_2",
-            type: "hotel",
-            name: "The Ritz-Carlton Bali",
-            description: "Zen-like quarters, some with butler service, in an upscale property offering refined dining & a spa.",
-            location: {
-                latitude: -8.830671,
-                longitude: 115.215331,
-                address: "Jl. Raya Nusa Dua Selatan Lot III, Sawangan, Nusa Dua, Bali 80363, Indonesia",
-            },
-            hotelClass: 5,
-            checkIn: "3:00 PM",
-            checkOut: "12:00 PM",
-            amenities: [
-                "Free Wi-Fi",
-                "Pools",
-                "Spa",
-                "Beach access",
-                "Room service",
-                "Butler service",
-                "Multiple restaurants",
-            ],
-            images: [
-                {
-                    thumbnail: "/hero.png",
-                    original: "/hero.png",
-                },
-                {
-                    thumbnail: "/hero.png",
-                    original: "/hero.png",
-                },
-            ],
-            price: {
-                current: 347,
-                currency: "USD",
-                beforeTaxes: 287,
-                includesTaxes: true,
             },
             rating: {
                 overall: 4.8,
-                totalReviews: 2854,
-                location: 4.5,
+                totalReviews: 1250,
+                location: 4.9,
                 breakdown: [
                     {
-                        name: "Property",
-                        description: "Property",
-                        totalMentions: 405,
-                        positive: 384,
-                        negative: 12,
-                        neutral: 9,
+                        name: "Cleanliness",
+                        description: "Property Cleanliness",
+                        totalMentions: 850,
+                        positive: 820,
+                        negative: 10,
+                        neutral: 20
+                    },
+                    {
+                        name: "Service",
+                        description: "Staff Service",
+                        totalMentions: 750,
+                        positive: 700,
+                        negative: 25,
+                        neutral: 25
                     }
                 ]
             },
             brand: {
-                name: "Ritz-Carlton",
-                logo: "/hero.png",
+                name: "Luxury Hotels International",
+                logo: "/api/placeholder/120/40"
             },
+            nearbyPlaces: [
+                {
+                    name: "Paradise Beach",
+                    category: "Beach",
+                    rating: 4.7,
+                    reviews: 3500,
+                    transportations: [
+                        {
+                            type: "Walking",
+                            duration: "5 min"
+                        }
+                    ]
+                },
+                {
+                    name: "Local Market",
+                    category: "Shopping",
+                    rating: 4.5,
+                    reviews: 1200,
+                    transportations: [
+                        {
+                            type: "Taxi",
+                            duration: "10 min"
+                        },
+                        {
+                            type: "Walking",
+                            duration: "20 min"
+                        }
+                    ]
+                }
+            ],
+            refundable: true,
+            sponsored: false,
+            propertyToken: "mock-property-token",
+            serpapi_property_details_link: "https://serpapi.com/hotel/details/mock",
+            availableRooms: 5,
+            badges: ["Beachfront", "Luxury", "Spa Resort"],
             meta: {
-                lastUpdated: new Date().toISOString(),
                 typicalPriceRange: {
-                    min: 300,
-                    max: 500,
+                    min: 350,
+                    max: 800
+                },
+                ecoCertified: true,
+                dealDescription: "Summer Special - 22% off"
+            }
+        };
+
+        const mockHotelDetails: HotelOfferDetails = {
+            type: 'hotel',
+            id: "mock-hotel-1",
+            propertyId: "mock-property-token",
+            name: "Grand Luxury Resort & Spa",
+            description: "Discover unparalleled luxury at our beachfront resort.",
+            rooms: [
+                {
+                    id: "deluxe-ocean",
+                    name: "Deluxe Ocean View Room",
+                    description: "Spacious room with stunning ocean views",
+                    maxOccupancy: 2,
+                    amenities: [
+                        "King Bed",
+                        "Ocean View",
+                        "Private Balcony",
+                        "Mini Bar",
+                        "Rain Shower"
+                    ],
+                    images: [
+                        {
+                            url: "/api/placeholder/800/600",
+                            alt: "Deluxe Ocean View Room"
+                        }
+                    ],
+                    price: {
+                        amount: 350,
+                        currency: "USD",
+                        breakdown: {
+                            baseRate: 320,
+                            taxes: 20,
+                            fees: 10
+                        }
+                    },
+                    cancellationPolicy: {
+                        isCancellable: true,
+                        deadline: "2024-02-13 15:00:00",
+                        penalties: [
+                            {
+                                from: "2024-02-13 15:00:00",
+                                amount: 350,
+                                currency: "USD"
+                            }
+                        ]
+                    }
+                },
+                {
+                    id: "suite-premium",
+                    name: "Premium Suite",
+                    description: "Luxury suite with separate living area",
+                    maxOccupancy: 3,
+                    amenities: [
+                        "King Bed",
+                        "Separate Living Area",
+                        "Premium Ocean View",
+                        "Jacuzzi",
+                        "Butler Service"
+                    ],
+                    images: [
+                        {
+                            url: "/api/placeholder/800/600",
+                            alt: "Premium Suite"
+                        }
+                    ],
+                    price: {
+                        amount: 550,
+                        currency: "USD",
+                        breakdown: {
+                            baseRate: 500,
+                            taxes: 35,
+                            fees: 15
+                        }
+                    },
+                    cancellationPolicy: {
+                        isCancellable: true,
+                        deadline: "2024-02-13 15:00:00"
+                    }
+                }
+            ],
+            availableRooms: 5,
+            bookingOptions: {
+                paymentTypes: ["Credit Card", "Bank Transfer"],
+                guarantee: {
+                    required: true,
+                    amount: 100,
+                    currency: "USD"
                 }
             }
-        }
-    ];
+        };
 
-    return NextResponse.json({data: EXAMPLE_HOTELS});
-    
-    // try {
-    //     const { providerId } = params;
-    //     const {
-    //         city,
-    //         checkIn,
-    //         checkOut,
-    //         adults = 2,
-    //         children = 0,
-    //         rooms = 1,
-    //         priceRange,
-    //         amenities,
-    //         ratings,
-    //         currency = "USD",
-    //         propertyId
-    //     } = await req.json();
+        return NextResponse.json({
+            offer: mockHotelOffer,
+            details: mockHotelDetails,
+            success: true,
+        });
 
-    //     switch (providerId) {
-    //         case 'serp': {
-    //             // Construct query parameters for SerpAPI
-    //             const searchParams = new URLSearchParams({
-    //                 engine: "google_hotels",
-    //                 q: `${city} Hotels`,
-    //                 check_in_date: checkIn,
-    //                 check_out_date: checkOut,
-    //                 adults: adults.toString(),
-    //                 currency: currency,
-    //                 gl: "us",
-    //                 hl: "en",
-    //                 api_key: SERP_API_KEY!,
-    //             });
-
-    //             if (children > 0) {
-    //                 searchParams.append("children", children.toString());
-    //             }
-
-    //             if (propertyId) {
-    //                 searchParams.append("property_token", propertyId);
-    //             }
-
-    //             const response = await fetch(`${BASE_URL}?${searchParams.toString()}`);
-
-    //             if (!response.ok) {
-    //                 throw new Error(`SerpAPI request failed with status ${response.status}`);
-    //             }
-
-    //             const data = await response.json();
-                
-    //             // Transform properties to our HotelOffer format
-    //             const transformedOffers: HotelOffer[] = propertyId 
-    //                 ? [transformSerpApiPropertyToHotelOffer(data)]
-    //                 : data.properties.map(transformSerpApiPropertyToHotelOffer);
-
-    //             // Apply additional filters if provided
-    //             let filteredOffers = transformedOffers;
-
-    //             if (priceRange?.min || priceRange?.max) {
-    //                 filteredOffers = filteredOffers.filter(offer => {
-    //                     const price = offer.price.current;
-    //                     const meetsMinPrice = !priceRange.min || price >= priceRange.min;
-    //                     const meetsMaxPrice = !priceRange.max || price <= priceRange.max;
-    //                     return meetsMinPrice && meetsMaxPrice;
-    //                 });
-    //             }
-
-    //             if (amenities?.length) {
-    //                 filteredOffers = filteredOffers.filter(offer =>
-    //                     amenities.every(amenity => 
-    //                         offer.amenities.some(a => 
-    //                             a.toUpperCase().includes(amenity.toUpperCase())
-    //                         )
-    //                     )
-    //                 );
-    //             }
-
-    //             if (ratings?.length) {
-    //                 filteredOffers = filteredOffers.filter(offer =>
-    //                     ratings.includes(offer.hotelClass?.toString())
-    //                 );
-    //             }
-
-    //             return NextResponse.json({
-    //                 data: filteredOffers,
-    //                 pagination: data.serpapi_pagination,
-    //                 success: true,
-    //             });
-    //         }
-
-    //         default:
-    //             throw new Error(`Unsupported provider: ${providerId}`);
-    //     }
-
-    // } catch (error) {
-    //     console.error('Error in hotel-offers:', error);
-    //     return NextResponse.json(
-    //         {
-    //             error: error instanceof Error ? error.message : 'Failed to fetch hotel offers',
-    //             success: false,
-    //         },
-    //         { status: 500 }
-    //     );
-    // }
-}
-
-function transformSerpApiPropertyToHotelOffer(property: any): HotelOffer {
-    return {
-        id: property.property_token || String(Math.random()),
-        type: property.type || 'hotel',
-        name: property.name,
-        description: property.description,
-        location: {
-            latitude: property.gps_coordinates.latitude,
-            longitude: property.gps_coordinates.longitude,
-            address: property.address,
-        },
-        hotelClass: property.extracted_hotel_class,
-        checkIn: property.check_in_time,
-        checkOut: property.check_out_time,
-        amenities: property.amenities || [],
-        images: property.images.map((img: any) => ({
-            thumbnail: img.thumbnail,
-            original: img.original_image,
-        })),
-        price: {
-            current: property.rate_per_night.extracted_lowest,
-            original: property.prices?.[0]?.original_rate_per_night?.extracted_lowest,
-            currency: property.prices?.[0]?.currency || 'USD',
-            beforeTaxes: property.rate_per_night.extracted_before_taxes_fees,
-            includesTaxes: true,
-            ...(property.prices?.[0]?.discount_remarks && {
-                discount: {
-                    label: property.prices[0].discount_remarks[0],
-                    amount: property.prices[0].original_rate_per_night.extracted_lowest - 
-                           property.prices[0].rate_per_night.extracted_lowest,
-                }
-            })
-        },
-        rating: {
-            overall: property.overall_rating,
-            totalReviews: property.reviews,
-            location: property.location_rating,
-            breakdown: property.reviews_breakdown?.map((rb: any) => ({
-                name: rb.name,
-                description: rb.description,
-                totalMentions: rb.total_mentioned,
-                positive: rb.positive,
-                negative: rb.negative,
-                neutral: rb.neutral,
-            }))
-        },
-        brand: property.logo ? {
-            name: property.name,
-            logo: property.logo,
-        } : undefined,
-        nearbyPlaces: property.nearby_places?.map((place: any) => ({
-            name: place.name,
-            category: place.category,
-            transportations: place.transportations,
-            rating: place.rating,
-            reviews: place.reviews,
-        })),
-        meta: {
-            sustainabilityInfo: {
-                ecoCertified: property.eco_certified || false,
+    } catch (error) {
+        console.error('Error in hotel-offer:', error);
+        return NextResponse.json(
+            {
+                error: error instanceof Error ? error.message : 'Failed to fetch hotel offer',
+                success: false,
             },
-            lastUpdated: new Date().toISOString(),
-            typicalPriceRange: property.typical_price_range,
-            ...(property.deal && {
-                deal: {
-                    type: property.deal,
-                    description: property.deal_description
-                }
-            })
-        }
-    };
+            { status: 500 }
+        );
+    }
 }

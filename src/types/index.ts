@@ -294,3 +294,137 @@ export interface SearchHotelOffersParams {
   boardType?: string;
   paymentPolicy?: string;
 }
+
+// types/car.ts
+
+export interface CarLocation {
+  id: string;
+  name: string;
+  type: 'airport' | 'city' | 'station' | 'other';
+  address?: string;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
+}
+
+export interface CarVendor {
+  id: string;
+  name: string;
+  logo?: string;
+  rating?: number;
+  reviewCount?: number;
+}
+
+export interface CarAgent {
+  id: string;
+  name: string;
+  logo?: string;
+  type: 'vendor' | 'broker' | 'other';
+  rating?: number;
+  reviewCount?: number;
+}
+
+export interface CarFeatures {
+  transmission: 'automatic' | 'manual';
+  airConditioning: boolean;
+  doors: number;
+  seats: number;
+  baggageCapacity: {
+    large: number;
+    small: number;
+  };
+  category: string; // e.g., 'economy', 'luxury', 'suv', etc.
+  fuelType: 'petrol' | 'diesel' | 'electric' | 'hybrid';
+  fuelPolicy: 'full_to_full' | 'full_to_empty' | 'pre_purchase';
+}
+
+export interface CarPrice {
+  amount: number;
+  currency: string;
+  breakdown?: {
+    baseRate: number;
+    taxes: number;
+    fees: number;
+    insurance?: number;
+    extras?: number;
+  };
+  includesTaxes: boolean;
+  includesInsurance: boolean;
+}
+
+export interface CarInsurance {
+  type: 'basic' | 'medium' | 'full';
+  coverage: {
+    collision?: boolean;
+    theft?: boolean;
+    thirdParty?: boolean;
+    personal?: boolean;
+  };
+  excess?: {
+    amount: number;
+    currency: string;
+  };
+}
+
+export interface CarOffer {
+  id: string;
+  provider: string;
+  status: 'available' | 'on_request' | 'sold_out';
+  
+  // Vehicle information
+  name: string;
+  model?: string;
+  brand?: string;
+  images: Array<{
+    url: string;
+    alt?: string;
+  }>;
+  features: CarFeatures;
+  
+  // Location details
+  pickupLocation: CarLocation;
+  dropoffLocation: CarLocation;
+  pickupDateTime: string;
+  dropoffDateTime: string;
+  
+  // Pricing and booking
+  price: CarPrice;
+  insurance: CarInsurance[];
+  cancellationPolicy?: {
+    isCancellable: boolean;
+    deadline?: string;
+    charge?: {
+      amount: number;
+      currency: string;
+    };
+  };
+  
+  // Provider information
+  vendor: CarVendor;
+  agent: CarAgent;
+  
+  // Additional info
+  mileage?: {
+    limit?: number;
+    unlimited: boolean;
+    unit: 'km' | 'miles';
+  };
+  requiredDocuments?: string[];
+  restrictions?: {
+    minAge?: number;
+    maxAge?: number;
+    minLicenseHeld?: number;
+    requiredCreditCard: boolean;
+  };
+  
+  // Booking details
+  deepLink?: string;
+  meta?: Record<string, any>;
+}
+
+// For Skyscanner specific response
+export interface SkyscannerCarOffer extends CarOffer {
+  provider: 'skyscanner';
+  skyscanner_session_token?: string;
+}

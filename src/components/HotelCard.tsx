@@ -10,15 +10,38 @@ import { useRouter } from "next/navigation"
 
 interface HotelCardProps {
   offer: HotelOffer;
+  searchParams?: {
+    checkIn: string;
+    checkOut: string;
+    adults: number;
+  };
 }
 
-export function HotelCard({ offer }: HotelCardProps) {
+export function HotelCard({ 
+  offer,
+  searchParams = {
+    checkIn: new Date().toISOString().split('T')[0],
+    checkOut: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    adults: 2
+  }
+}: HotelCardProps) {
   const router = useRouter();
-  const [isFavorite, setIsFavorite] = useState(false);
 
   const handleBooking = () => {
-    const encodedData = encodeURIComponent(JSON.stringify(offer));
-    router.push(`/hotel/booking?hotelData=${encodedData}`);
+    if (!offer.propertyToken) {
+      console.error('No property token available');
+      return;
+    }
+
+    const params = new URLSearchParams({
+        propertyToken: offer.propertyToken,
+        q: offer.name,
+        checkIn: searchParams.checkIn,
+        checkOut: searchParams.checkOut,
+        adults: searchParams.adults.toString()
+    });
+
+    router.push(`/hotel/booking?${params.toString()}`);
   };
 
   return (

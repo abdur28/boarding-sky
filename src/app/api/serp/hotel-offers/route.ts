@@ -52,6 +52,7 @@
 //         // Transform SerpAPI response to match our HotelOffer type
 //         const transformedOffers: HotelOffer[] = data.properties.map((property: any) => ({
 //             id: property.property_token,
+//             proopertyToken: 'property.property_token',
 //             type: property.type,
 //             name: property.name,
 //             description: property.description,
@@ -175,6 +176,7 @@ export async function POST(req: Request) {
         // Example hotel offers for testing
         const exampleHotels: HotelOffer[] = [
             {
+                propertyToken: "hotel-1",
                 id: "hotel-1",
                 type: "hotel",
                 name: "The Ritz-Carlton, Bali",
@@ -263,6 +265,7 @@ export async function POST(req: Request) {
                 sponsored: false
             },
             {
+                propertyToken: "hotel-2",
                 id: "hotel-2",
                 type: "resort",
                 name: "Mulia Resort - Nusa Dua",
