@@ -1,270 +1,297 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { Car, MapPin, Calendar, Shield, Users, Radio, Wind, Gauge, Fuel, Loader2 } from 'lucide-react'
-import Image from 'next/image'
-import { Badge } from '../ui/badge'
+import { Loader2, Shield, Calendar, MapPin } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { CarOffer } from "@/types"
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
+import { useRouter } from "next/navigation"
+import { CarBookingForm } from "@/components/forms/CarBookingForm"
 
-const CarSummary = () => {
-  return (
-    <Card className="lg:sticky lg:top-20">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle>Fullsize</CardTitle>
-            <CardDescription>Chevrolet Malibu or similar</CardDescription>
-          </div>
-          <Badge variant="secondary">Great Deal</Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Car Features */}
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            <span>5 Passengers</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Wind className="h-4 w-4" />
-            <span>Air Conditioning</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Gauge className="h-4 w-4" />
-            <span>Unlimited mileage</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Car className="h-4 w-4" />
-            <span>4 Doors</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Radio className="h-4 w-4" />
-            <span>Automatic</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Fuel className="h-4 w-4" />
-            <span>Fuel: full to full</span>
-          </div>
-        </div>
+interface CarBookingPageProps {
+    offerId: string
+    pickupDate: string
+    dropoffDate: string
+    pickupLocation: string
+    dropoffLocation: string
+}
 
-        {/* Rental Details */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            <div className="text-sm">
-              <p>Wed, Feb 26, 10:30am -</p>
-              <p>Thu, Feb 27, 10:30am</p>
+const CarBookingPage = ({
+    offerId,
+    pickupDate,
+    dropoffDate,
+    pickupLocation,
+    dropoffLocation,
+}: CarBookingPageProps) => {
+    const router = useRouter()
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+    const [carOffer, setCarOffer] = useState<CarOffer | null>(null)
+    const [isFormValid, setIsFormValid] = useState(false)
+    const [formData, setFormData] = useState<any>(null)
+
+    useEffect(() => {
+        const fetchCarOffer = async () => {
+            try {
+                setIsLoading(true)
+                setError(null)
+
+                const response = await fetch('/api/skyscanner/car-offer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        offerId,
+                        pickUpLocation: pickupLocation,
+                        dropOffLocation: dropoffLocation,
+                        pickUpDate: pickupDate,
+                        dropOffDate: dropoffDate,
+                    }),
+                })
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch car offer')
+                }
+
+                const data = await response.json()
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to fetch car offer')
+                }
+
+                setCarOffer(data.offer)
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'An error occurred')
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        if (offerId) {
+            fetchCarOffer()
+        }
+    }, [offerId, pickupLocation, dropoffLocation, pickupDate, dropoffDate])
+
+
+    
+    const handleFormChange = (isValid: boolean, data: any) => {
+        setIsFormValid(isValid)
+        setFormData(data)
+    }
+
+    const handleBookNow = async () => {
+        if (!carOffer || !isFormValid || !formData) return;
+        setIsLoading(true);
+    
+        try {
+            const response = await fetch('/api/payment/checkout-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    carOffer,
+                    bookingDetails: {
+                        pickupDate,
+                        dropoffDate,
+                        pickupLocation,
+                        dropoffLocation,
+                        driverDetails: {
+                            firstName: formData.firstName,
+                            middleName: formData.middleName,
+                            lastName: formData.lastName,
+                            email: formData.email,
+                            phone: formData.phone,
+                            country: formData.country,
+                            licenseNumber: formData.licenseNumber,
+                            dateOfBirth: `${formData.birthYear}-${formData.birthMonth.padStart(2, '0')}-${formData.birthDay.padStart(2, '0')}`,
+                            licenseExpiry: formData.licenseExpiry
+                        }
+                    }
+                }),
+            });
+    
+            const data = await response.json();
+    
+            if (data.url) {
+                window.location.href = data.url; // Redirect to Stripe Checkout
+            } else {
+                throw new Error('Failed to create checkout session');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            setError('Failed to process payment. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    if (isLoading) return <LoadingState />
+    if (error) return <ErrorState message={error} />
+    if (!carOffer) return <NoDataState />
+
+    return (
+        <div className="w-full max-w-7xl px-5 py-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Car Images */}
+                    <Card>
+                        <CardContent className="p-6">
+                            <Carousel className="w-full h-[400px]">
+                                <CarouselContent>
+                                    {carOffer.images.map((image, index) => (
+                                        <CarouselItem key={index}>
+                                            <img
+                                                src={image.url}
+                                                alt={image.alt || `${carOffer.name} - Image ${index + 1}`}
+                                                className="w-full h-[400px] object-cover rounded-lg"
+                                            />
+                                        </CarouselItem>
+                                    ))}
+                                </CarouselContent>
+                                <CarouselPrevious />
+                                <CarouselNext />
+                            </Carousel>
+                        </CardContent>
+                    </Card>
+
+                    {/* Booking Form */}
+                    <CarBookingForm onFormChange={handleFormChange} />
+                </div>
+
+                {/* Price Summary */}
+                <div className="lg:col-span-1">
+                    <Card className="sticky top-20">
+                        <CardHeader>
+                            <CardTitle>Rental Summary</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-4">
+                                {/* Car Details */}
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="font-medium">{carOffer.name}</h3>
+                                        <p className="text-sm text-muted-foreground">{carOffer.model} or similar</p>
+                                    </div>
+                                    {carOffer.vendor.logo && (
+                                        <img 
+                                            src={carOffer.vendor.logo} 
+                                            alt={carOffer.vendor.name}
+                                            className="h-8 object-contain" 
+                                        />
+                                    )}
+                                </div>
+
+                                {/* Rental Details */}
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                                        <div>
+                                            <p className="font-medium">Pick-up: {pickupDate}</p>
+                                            <p className="font-medium">Drop-off: {dropoffDate}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                                        <div>
+                                            <p className="font-medium">{carOffer.pickupLocation.name}</p>
+                                            {dropoffLocation !== pickupLocation && (
+                                                <p className="text-muted-foreground">
+                                                    Return to: {carOffer.dropoffLocation.name}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Price Breakdown */}
+                                {carOffer.price.breakdown && (
+                                    <div className="space-y-2 pt-4 border-t">
+                                        <div className="flex justify-between text-sm">
+                                            <span>Base Rate</span>
+                                            <span>${carOffer.price.breakdown.baseRate.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span>Taxes & Fees</span>
+                                            <span>
+                                                ${(carOffer.price.breakdown.taxes + carOffer.price.breakdown.fees).toFixed(2)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Total Price */}
+                                <div className="pt-4 border-t">
+                                    <div className="flex justify-between items-center">
+                                        <span className="font-medium">Total Price</span>
+                                        <div className="text-right">
+                                            <span className="text-2xl font-bold">
+                                                ${carOffer.price.amount.toFixed(2)}
+                                            </span>
+                                            <p className="text-xs text-muted-foreground">
+                                                {carOffer.price.includesTaxes ? 'Includes' : 'Excludes'} taxes and fees
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Book Now Button */}
+                            <Button 
+                                className="w-full" 
+                                onClick={handleBookNow}
+                                disabled={!isFormValid || isLoading}
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Processing...
+                                    </>
+                                ) : (
+                                    'Proceed to Payment'
+                                )}
+                            </Button>
+
+                            {/* Cancellation Policy */}
+                            {carOffer.cancellationPolicy?.isCancellable && (
+                                <div className="flex items-center gap-2 text-green-600 text-sm">
+                                    <Shield className="h-4 w-4" />
+                                    <span>
+                                        Free cancellation until{' '}
+                                        {carOffer.cancellationPolicy.deadline}
+                                    </span>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            <p className="text-sm">1 Northside Piers, Brooklyn, New York</p>
-          </div>
         </div>
-
-        {/* Price Breakdown */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Car rental fee (1 day)</span>
-            <span>$32.64</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span>Taxes and fees</span>
-            <span>$6.81</span>
-          </div>
- 
-          <div className="flex justify-between font-bold">
-            <span>Total</span>
-            <span>$39.45</span>
-          </div>
-          <div className="text-sm text-muted-foreground">
-            <p>Pay now: $32.64</p>
-            <p>Pay at pick-up: $6.81</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
+    )
 }
 
-export default function CarBookingPage() {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const [acceptTerms, setAcceptTerms] = useState(false)
-  const [selectedExtras, setSelectedExtras] = useState<string[]>([])
-
-  const extras = [
-    { id: 'booster', name: 'Booster Seat', price: 17 },
-    { id: 'toddler', name: 'Toddler Seat', price: 17 },
-    { id: 'infant', name: 'Infant Seat', price: 17 },
-    { id: 'satellite', name: 'Satellite Radio', price: 8 },
-  ]
-
-  const handleProceed = async () => {
-    if (!acceptTerms) {
-      alert("Please accept the terms and conditions")
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      // Here you would make an API call to create the booking
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      router.push('/car/payment/CAR123')
-    } catch (error) {
-      console.error('Booking failed:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="lg:grid lg:grid-cols-12 lg:gap-8">
-        {/* Left Side - Car Summary */}
-        <div className="pb-6 lg:pb-0 lg:col-span-4">
-          <CarSummary />
-        </div>
-
-        {/* Right Side - Booking Details */}
-        <div className="lg:col-span-8 space-y-6">
-          {/* Insurance Options */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Rental Car Insurance
-              </CardTitle>
-              <CardDescription>Protect your rental with comprehensive coverage</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-start gap-2">
-                  <Shield className="h-4 w-4 mt-1" />
-                  <span>Covers certain bumps, scratches, and other damage</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Shield className="h-4 w-4 mt-1" />
-                  <span>Helps protect your rental vehicle in case of an accident or collision</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Shield className="h-4 w-4 mt-1" />
-                  <span>Gives you access to 24/7 emergency travel assistance</span>
-                </div>
-              </div>
-              <Alert>
-                <AlertDescription>
-                  Add the insurance plan to your rental car on the next step.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-
-          {/* Extra Options */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Extra Options</CardTitle>
-              <CardDescription>
-                Add extra items to your rental. Requests subject to availability.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {extras.map((extra) => (
-                  <div key={extra.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={extra.id}
-                        checked={selectedExtras.includes(extra.id)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedExtras([...selectedExtras, extra.id])
-                          } else {
-                            setSelectedExtras(selectedExtras.filter(id => id !== extra.id))
-                          }
-                        }}
-                      />
-                      <Label htmlFor={extra.id}>{extra.name}</Label>
-                    </div>
-                    <span className="font-medium">${extra.price}/day</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Rental Policies */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Rental Policies</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium">Cancellation and no-show policy</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Cancellation available with fee of $100
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-medium">Age surcharge</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Applicable for drivers under 25 years
-                  </p>
-                </div>
-              </div>
-
-              <Alert>
-                <AlertTitle>Important Information</AlertTitle>
-                <AlertDescription>
-                  <ul className="list-disc pl-4 space-y-2 text-sm">
-                    <li>Valid driver's license required at pick-up</li>
-                    <li>Credit card in main driver's name required</li>
-                    <li>Fuel policy: Full to Full</li>
-                    <li>Age restrictions apply</li>
-                  </ul>
-                </AlertDescription>
-              </Alert>
-
-              <div className="flex items-start space-x-2">
-                <Checkbox 
-                  id="terms" 
-                  checked={acceptTerms} 
-                  onCheckedChange={(checked) => setAcceptTerms(checked as boolean)} 
-                />
-                <Label htmlFor="terms" className="text-sm">
-                  I acknowledge that I have reviewed and accept the rental terms,
-                  cancellation policy, and rental requirements.
-                </Label>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline" onClick={() => router.back()}>
-                Back
-              </Button>
-              <Button 
-                onClick={handleProceed} 
-                disabled={isLoading || !acceptTerms}
-                className="min-w-[200px]"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  'Proceed to Payment'
-                )}
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-      </div>
+const LoadingState = () => (
+    <div className="w-full min-h-[400px] flex flex-col items-center justify-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-lg text-muted-foreground">Loading car rental details...</p>
     </div>
-  )
-}
+)
+
+const ErrorState = ({ message }: { message: string }) => (
+    <Alert variant="destructive" className="max-w-2xl mx-auto my-8">
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{message}</AlertDescription>
+    </Alert>
+)
+
+const NoDataState = () => (
+    <div className="w-full min-h-[400px] flex flex-col items-center justify-center gap-4">
+        <p className="text-xl font-semibold text-muted-foreground">No car rental data found</p>
+        <p className="text-muted-foreground">Please try again with different search criteria</p>
+    </div>
+)
+
+export default CarBookingPage

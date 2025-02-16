@@ -9,8 +9,8 @@ import { Car, Fuel, Users, Gauge, Shield, CreditCard } from "lucide-react"
 interface CarCardProps {
   offer: CarOffer
   searchParams?: {
-    pickupDateTime: string
-    dropoffDateTime: string
+    pickupDate: string
+    dropoffDate: string
     pickupLocation: string
     dropoffLocation?: string
   }
@@ -25,8 +25,8 @@ export function CarCard({
   const handleBooking = () => {
     const params = new URLSearchParams({
       offerId: offer.id,
-      pickupDateTime: searchParams?.pickupDateTime || '',
-      dropoffDateTime: searchParams?.dropoffDateTime || '',
+      pickupDate: searchParams?.pickupDate || '',
+      dropoffDate: searchParams?.dropoffDate || '',
       pickupLocation: searchParams?.pickupLocation || '',
       dropoffLocation: searchParams?.dropoffLocation || searchParams?.pickupLocation || '',
     })

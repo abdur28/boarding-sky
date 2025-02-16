@@ -36,6 +36,19 @@ interface CarState {
   applyFilters: (filters: Partial<CarSearchParams>) => void;
 }
 
+const CATEGORY_ORDER = [
+  'economy',
+  'compact',
+  'intermediate',
+  'standard',
+  'fullsize',
+  'premium',
+  'luxury',
+  'suv',
+  'van',
+  'pickup'
+];
+
 export const useCar = create<CarState>((set, get) => ({
   carOffers: [],
   filteredCars: [],
@@ -74,12 +87,19 @@ export const useCar = create<CarState>((set, get) => ({
       }
 
       const offers = data.offers || [];
+      console.log(offers);
 
       set({
         carOffers: offers,
         filteredCars: offers,
         isLoading: false,
       });
+
+      // Apply any existing filters after loading new data
+      if (params.priceRange || params.transmission?.length || params.category?.length ||
+          params.features?.length || params.fuelType?.length || params.vendor?.length) {
+        get().applyFilters(params);
+      }
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch car offers';
@@ -147,10 +167,10 @@ export const useCar = create<CarState>((set, get) => ({
 
     // Price range filter
     if (filters.priceRange) {
+      const min = filters.priceRange.min || 0;
+      const max = filters.priceRange.max || Infinity;
       filtered = filtered.filter(car => {
         const price = car.price.amount;
-        const min = filters.priceRange?.min || 0;
-        const max = filters.priceRange?.max || Infinity;
         return price >= min && price <= max;
       });
     }
@@ -172,13 +192,16 @@ export const useCar = create<CarState>((set, get) => ({
     // Features filter
     if (filters.features?.length) {
       filtered = filtered.filter(car => {
-        // Convert car features to a comparable format
-        const carFeatures = [
-          car.features.airConditioning ? 'AIR_CONDITIONING' : '',
-          // Add other feature mappings as needed
-        ].filter(Boolean);
-
-        return filters.features?.some(feature => carFeatures.includes(feature));
+        return filters.features?.every(feature => {
+          switch (feature) {
+            case 'AIR_CONDITIONING':
+              return car.features.airConditioning;
+            case 'THIRD_ROW_SEATS':
+              return car.features.seats >= 7;
+            default:
+              return false;
+          }
+        });
       });
     }
 
@@ -195,6 +218,31 @@ export const useCar = create<CarState>((set, get) => ({
         filters.vendor?.includes(car.vendor.id)
       );
     }
+
+    // Sort results
+    filtered.sort((a, b) => {
+      // First by price
+      if (a.price.amount !== b.price.amount) {
+        return a.price.amount - b.price.amount;
+      }
+      
+      // Then by category if prices are equal
+      const categoryA = CATEGORY_ORDER.indexOf(a.features.category.toLowerCase());
+      const categoryB = CATEGORY_ORDER.indexOf(b.features.category.toLowerCase());
+      if (categoryA !== categoryB) {
+        return categoryA - categoryB;
+      }
+      
+      // Then by passenger capacity
+      if (a.features.seats !== b.features.seats) {
+        return b.features.seats - a.features.seats;
+      }
+      
+      // Finally by luggage capacity
+      const luggageA = a.features.baggageCapacity.large + (a.features.baggageCapacity.small * 0.5);
+      const luggageB = b.features.baggageCapacity.large + (b.features.baggageCapacity.small * 0.5);
+      return luggageB - luggageA;
+    });
 
     set({ filteredCars: filtered });
   },

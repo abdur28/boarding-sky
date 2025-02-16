@@ -8,6 +8,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CitySearchPopup } from './CitySearchPopup'
+import { format } from "date-fns"
 
 const CarSearch = () => {
     const router = useRouter()
@@ -29,8 +30,8 @@ const CarSearch = () => {
             return
         }
 
-        const pickUpDate = dates.from.toISOString().split('T')[0]
-        const dropOffDate = dates.to.toISOString().split('T')[0]
+        const pickUpDate = format(dates.from, 'yyyy-MM-dd')
+        const dropOffDate = format(dates.to, 'yyyy-MM-dd')
 
         const params = new URLSearchParams({
             pickUpDate,
@@ -41,6 +42,12 @@ const CarSearch = () => {
         })
 
         router.push(`/car/search?${params.toString()}`)
+    }
+
+    const formatDateRange = () => {
+        if (!dates.from) return "Select dates"
+        if (!dates.to) return format(dates.from, 'MMM dd, yyyy')
+        return `${format(dates.from, 'MMM dd, yyyy')} - ${format(dates.to, 'MMM dd, yyyy')}`
     }
 
     return (
@@ -75,18 +82,7 @@ const CarSearch = () => {
                                 className="w-full justify-start text-left font-normal"
                             >
                                 <CalendarIcon className="mr-2 h-4 w-4" />
-                                {dates.from ? (
-                                    dates.to ? (
-                                        <>
-                                            {dates.from.toLocaleDateString()} -{" "}
-                                            {dates.to.toLocaleDateString()}
-                                        </>
-                                    ) : (
-                                        dates.from.toLocaleDateString()
-                                    )
-                                ) : (
-                                    <span>Select dates</span>
-                                )}
+                                {formatDateRange()}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">

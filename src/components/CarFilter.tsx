@@ -8,8 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Slider } from "@/components/ui/slider"
+import { useCar } from "@/hooks/useCar"
 
 interface FilterSection {
   id: string
@@ -51,17 +50,7 @@ const TRANSMISSIONS = {
 
 const FEATURES = {
   'AIR_CONDITIONING': 'Air Conditioning',
-  'BLUETOOTH': 'Bluetooth',
-  'GPS': 'GPS Navigation',
-  'CRUISE_CONTROL': 'Cruise Control',
-  'PARKING_SENSORS': 'Parking Sensors',
-  'BACKUP_CAMERA': 'Backup Camera',
-  'THIRD_ROW_SEATS': 'Third Row Seats',
-  'SKI_RACK': 'Ski Rack',
-  'BIKE_RACK': 'Bike Rack',
-  'CHILD_SEAT': 'Child Seat',
-  'USB': 'USB Port',
-  'WIFI': 'WiFi'
+  'THIRD_ROW_SEATS': 'Third Row Seats'
 } as const
 
 const FUEL_TYPES = {
@@ -85,6 +74,7 @@ const formatPriceRange = (min: string, max: string): string | null => {
 export function CarFilter({ loading = false }: { loading?: boolean }) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { applyFilters } = useCar()
   const initialPriceRange = parsePriceRange(searchParams.get('priceRange'))
 
   const [expandedSections, setExpandedSections] = useState<string[]>([''])
@@ -146,27 +136,35 @@ export function CarFilter({ loading = false }: { loading?: boolean }) {
       ...filters,
       priceRange: formattedRange || ''
     }
+    
+    // Update URL params
     updateURLParams(newFilters)
+
+    // Apply filters to car offers
+    const [min, max] = formattedRange ? formattedRange.split('-').map(Number) : [undefined, undefined]
+    applyFilters({
+      priceRange: formattedRange ? { min, max } : undefined,
+      transmission: newFilters.transmission,
+      category: newFilters.category,
+      features: newFilters.features,
+      fuelType: newFilters.fuelType,
+      vendor: newFilters.vendor
+    })
   }
 
   const clearAllFilters = () => {
     setPriceRange({ min: '', max: '' })
-    setFilters({
+    const emptyFilters = {
       priceRange: '',
       transmission: [],
       category: [],
       features: [],
       fuelType: [],
       vendor: []
-    })
-    updateURLParams({
-      priceRange: '',
-      transmission: [],
-      category: [],
-      features: [],
-      fuelType: [],
-      vendor: []
-    })
+    }
+    setFilters(emptyFilters)
+    updateURLParams(emptyFilters)
+    applyFilters({})
   }
 
   const toggleSection = (sectionId: string) => {

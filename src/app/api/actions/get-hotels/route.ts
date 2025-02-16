@@ -1,5 +1,4 @@
 import client from "@/lib/mongodb";
-import mongoose from "mongoose";
 import { unstable_noStore as noStore } from "next/cache";
 import { NextResponse } from "next/server";
 

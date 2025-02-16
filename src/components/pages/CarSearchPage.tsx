@@ -17,10 +17,12 @@ interface CarSearchPageProps {
     pickUpDate: string
     dropOffDate: string
     page: number
-    priceRange?: {
-      min?: number
-      max?: number
-    }
+    priceRangeStr?: string
+    transmission?: string[]
+    category?: string[]
+    features?: string[]
+    fuelType?: string[]
+    vendor?: string[]
 }
 
 const CarSearchPage = ({
@@ -29,11 +31,16 @@ const CarSearchPage = ({
     pickUpDate,
     dropOffDate,
     page = 1,
-    priceRange,
+    priceRangeStr,
+    transmission,
+    category,
+    features,
+    fuelType,
+    vendor
 }: CarSearchPageProps) => {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const { searchCarOffers, carOffers, filteredCars, isLoading, error } = useCar()
+    const { searchCarOffers, carOffers, filteredCars, isLoading, error, applyFilters } = useCar()
     const [totalPages, setTotalPages] = useState(1)
 
     const updatePageParam = (newPage: number) => {
@@ -44,16 +51,33 @@ const CarSearchPage = ({
 
     useEffect(() => {
         const fetchCars = async () => {
-            await searchCarOffers({
+            const params = {
                 pickUpLocation,
                 dropOffLocation,
                 pickUpDate,
                 dropOffDate,
-                priceRange,
-            })
+            }
+
+            await searchCarOffers(params)
+
+            // Apply filters after fetching cars
+            if (priceRangeStr || transmission?.length || category?.length || 
+                features?.length || fuelType?.length || vendor?.length) {
+                const [min, max] = priceRangeStr ? priceRangeStr.split('-').map(Number) : [undefined, undefined]
+                
+                applyFilters({
+                    priceRange: priceRangeStr ? { min, max } : undefined,
+                    transmission,
+                    category,
+                    features,
+                    fuelType,
+                    vendor
+                })
+            }
         }
         fetchCars()
-    }, [pickUpLocation, dropOffLocation, pickUpDate, dropOffDate, priceRange])
+    }, [pickUpLocation, dropOffLocation, pickUpDate, dropOffDate, 
+        priceRangeStr, transmission, category, features, fuelType, vendor])
 
     useEffect(() => {
         if (filteredCars?.length) {
@@ -117,8 +141,8 @@ const CarSearchPage = ({
                         key={car.id}
                         offer={car}
                         searchParams={{
-                            pickupDateTime: pickUpDate,
-                            dropoffDateTime: dropOffDate,
+                            pickupDate: pickUpDate,
+                            dropoffDate: dropOffDate,
                             pickupLocation: pickUpLocation,
                             dropoffLocation: dropOffLocation
                         }}
