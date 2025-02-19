@@ -9,6 +9,7 @@ import { HotelOffer, HotelOfferDetails } from "@/types"
 import { Badge } from "@/components/ui/badge"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { useRouter } from "next/navigation"
+import { HotelBookingForm } from "@/components/forms/HotelBookingForm"
 
 interface HotelBookingPageProps {
     propertyToken: string
@@ -31,10 +32,12 @@ const HotelBookingPage = ({
     adults,
 }: HotelBookingPageProps) => {
     const router = useRouter()
-    const [isLoading, setIsLoading] = useState(true)
+    const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [bookingData, setBookingData] = useState<BookingResponse | null>(null)
     const [selectedRoom, setSelectedRoom] = useState<string | null>(null)
+    const [isFormValid, setIsFormValid] = useState(false)
+    const [formData, setFormData] = useState<any>(null)
 
     useEffect(() => {
         const fetchHotelOffer = async () => {
@@ -82,23 +85,65 @@ const HotelBookingPage = ({
         setSelectedRoom(roomId)
     }
 
-    const handleBookNow = () => {
-        if (!selectedRoom || !bookingData) return
-
-        const selectedRoomData = bookingData.details.rooms.find(room => room.id === selectedRoom)
-        if (!selectedRoomData) return
-
-        const bookingParams = new URLSearchParams({
-            propertyToken,
-            roomId: selectedRoom,
-            checkIn,
-            checkOut,
-            adults: adults.toString(),
-            price: selectedRoomData.price.amount.toString(),
-            currency: selectedRoomData.price.currency
-        })
-
-        router.push(`/hotel/payment?${bookingParams.toString()}`)
+    const handleFormChange = (isValid: boolean, data: any) => {
+        setIsFormValid(isValid)
+        setFormData(data)
+    }
+    const handleBookNow = async () => {
+        if (!selectedRoom || !bookingData || !isFormValid || !formData) return
+        setIsLoading(true)
+    
+        try {
+            const selectedRoomData = bookingData.details.rooms.find(room => room.id === selectedRoom)
+            if (!selectedRoomData) throw new Error('Selected room not found')
+    
+            const response = await fetch('/api/payment/checkout-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    bookingType: 'hotel',
+                    offer: bookingData.offer,
+                    price: selectedRoomData.price.amount,
+                    bookingDetails: {
+                        email: formData.email,
+                        phone: formData.phone,
+                        firstName: formData.firstName,
+                        lastName: formData.lastName,
+                        checkIn,
+                        checkOut,
+                        rooms: 1,
+                        guests: formData.guests,
+                        specialRequests: formData.specialRequests,
+                        roomDetails: {
+                            id: selectedRoomData.id,
+                            name: selectedRoomData.name,
+                            price: selectedRoomData.price,
+                            maxOccupancy: selectedRoomData.maxOccupancy
+                        }
+                    },
+                    provider: bookingData.offer.provider
+                }),
+            })
+    
+            const data = await response.json()
+    
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to create checkout session')
+            }
+    
+            if (data.url) {
+                window.location.href = data.url
+            } else {
+                throw new Error('Invalid checkout session response')
+            }
+        } catch (error) {
+            console.error('Error:', error)
+            setError(error instanceof Error ? error.message : 'Failed to process payment')
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     if (isLoading) return <LoadingState />
@@ -263,6 +308,15 @@ const HotelBookingPage = ({
                         </CardContent>
                     </Card>
 
+                    {/* Booking Form - Only show when a room is selected */}
+                    {selectedRoom && (
+                        <HotelBookingForm 
+                            onFormChange={handleFormChange}
+                            numberOfRooms={1}
+                            numberOfGuests={adults}
+                        />
+                    )}
+
                     {/* Amenities */}
                     <Card>
                         <CardHeader>
@@ -310,9 +364,8 @@ const HotelBookingPage = ({
                         </Card>
                     )}
                 </div>
-
-                {/* Price Summary */}
-                <div className="lg:col-span-1">
+                                {/* Price Summary */}
+                                <div className="lg:col-span-1">
                     <Card className="sticky top-20">
                         <CardHeader>
                             <CardTitle>Price Summary</CardTitle>
@@ -323,8 +376,14 @@ const HotelBookingPage = ({
                                     {/* Selected Room Details */}
                                     <div className="space-y-4">
                                         <div className="flex justify-between">
-                                            <span>Room Rate</span>
+                                            <span>Room Rate (per night)</span>
                                             <span>${offer.price.beforeTaxes}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Number of Nights</span>
+                                            <span>
+                                                {Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24))}
+                                            </span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Taxes & fees</span>
@@ -340,10 +399,10 @@ const HotelBookingPage = ({
                                         )}
                                         <div className="pt-4 border-t">
                                             <div className="flex justify-between font-semibold">
-                                                <span>Total</span>
+                                                <span>Total Price</span>
                                                 <div className="text-right">
                                                     <span className="text-2xl">${offer.price.current}</span>
-                                                    <p className="text-sm text-muted-foreground">
+                                                    <p className="text-xs text-muted-foreground">
                                                         {offer.price.includesTaxes ? 'Includes' : 'Excludes'} taxes and fees
                                                     </p>
                                                 </div>
@@ -371,8 +430,16 @@ const HotelBookingPage = ({
                                         <Button 
                                             className="w-full mt-4" 
                                             onClick={handleBookNow}
+                                            disabled={!isFormValid || isLoading}
                                         >
-                                            Book Now
+                                            {isLoading ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Processing...
+                                                </>
+                                            ) : (
+                                                'Proceed to Payment'
+                                            )}
                                         </Button>
                                     </div>
                                 </>
@@ -412,7 +479,6 @@ const HotelBookingPage = ({
     )
 }
 
-/* Loading, Error, and No Data states remain the same */
 const LoadingState = () => (
     <div className="w-full min-h-[400px] flex flex-col items-center justify-center gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

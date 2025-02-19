@@ -50,6 +50,7 @@
 //         const hotelDetails: HotelOfferDetails = {
 //             type: data.type === 'vacation rental' ? 'vacation_rental' : 'hotel',
 //             id: propertyId,
+//             provider: 'serp',
 //             propertyId: propertyId,
 //             name: data.name,
 //             description: data.description,
@@ -189,7 +190,7 @@ export async function POST(req: Request) {
     try {
         const mockHotelOffer: SerpApiHotelOffer = {
             id: "mock-hotel-1",
-            provider: 'serpapi',
+            provider: 'serp',
             type: 'hotel',
             name: "Grand Luxury Resort & Spa",
             description: "Discover unparalleled luxury at our beachfront resort, featuring world-class amenities including infinity pools, private beach access, and award-winning restaurants. Each elegantly appointed room offers stunning ocean views and modern conveniences.",

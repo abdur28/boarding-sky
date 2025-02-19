@@ -40,7 +40,6 @@ const FlightSearchPage = ({
 
     useEffect(() => {
         const fetchFlights = async () => {
-            console.log({ providerIds, origin, destination, adults, children, infants, travelClass, departureDate, returnDate });
             await searchFlightOffers({                    
                 providerIds: ['amadeus'],
                 origin,
@@ -161,6 +160,8 @@ const FlightSearchPage = ({
                         offer={JSON.stringify(offer)}
                         origin={origin}
                         destination={destination}
+                        departureDate={departureDate}
+                        returnDate={returnDate}
                     />
                 ))}
                 {filteredFlights.length > limit && <Pagination />}

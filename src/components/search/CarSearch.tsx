@@ -1,6 +1,4 @@
-'use client'
-
-import { CalendarIcon, Search } from 'lucide-react'
+import { CalendarIcon, Clock, Search } from 'lucide-react'
 import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -9,6 +7,33 @@ import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CitySearchPopup } from './CitySearchPopup'
 import { format } from "date-fns"
+
+const TimeSelect = ({ value, onChange }: { 
+  value: string, 
+  onChange: (time: string) => void 
+}) => {
+  // Generate time options in 30-minute intervals
+  const timeOptions = Array.from({ length: 48 }, (_, i) => {
+    const hour = Math.floor(i / 2).toString().padStart(2, '0')
+    const minute = (i % 2 === 0 ? '00' : '30')
+    return `${hour}:${minute}`
+  })
+
+  return (
+    <div className="grid grid-cols-4 gap-2 p-4 h-[300px] overflow-y-auto">
+      {timeOptions.map((time) => (
+        <Button
+          key={time}
+          variant={value === time ? "default" : "ghost"}
+          className="text-sm"
+          onClick={() => onChange(time)}
+        >
+          {time}
+        </Button>
+      ))}
+    </div>
+  )
+}
 
 const CarSearch = () => {
     const router = useRouter()
@@ -22,6 +47,8 @@ const CarSearch = () => {
         to: searchParams.get('dropOffDate') ? new Date(searchParams.get('dropOffDate')!) : undefined,
     })
 
+    const [pickUpTime, setPickUpTime] = useState(searchParams.get('pickUpTime') || '10:00')
+    const [dropOffTime, setDropOffTime] = useState(searchParams.get('dropOffTime') || '10:00')
     const [pickUpLocation, setPickUpLocation] = useState(searchParams.get('pickUpLocation') || '')
     const [dropOffLocation, setDropOffLocation] = useState(searchParams.get('dropOffLocation') || '')
 
@@ -36,6 +63,8 @@ const CarSearch = () => {
         const params = new URLSearchParams({
             pickUpDate,
             dropOffDate,
+            pickUpTime,
+            dropOffTime,
             pickUpLocation,
             ...(dropOffLocation && { dropOffLocation }),
             page: '1'
@@ -97,6 +126,48 @@ const CarSearch = () => {
                                 onSelect={(range: any) => setDates(range)}
                                 numberOfMonths={2}
                                 disabled={(date) => date < new Date()}
+                            />
+                        </PopoverContent>
+                    </Popover>
+                </div>
+
+                <div className="space-y-2">
+                    <Label>Pickup time</Label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="outline"
+                                className="w-full justify-start text-left font-normal"
+                            >
+                                <Clock className="mr-2 h-4 w-4" />
+                                {pickUpTime}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <TimeSelect
+                                value={pickUpTime}
+                                onChange={setPickUpTime}
+                            />
+                        </PopoverContent>
+                    </Popover>
+                </div>
+
+                <div className="space-y-2">
+                    <Label>Drop-off time</Label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="outline"
+                                className="w-full justify-start text-left font-normal"
+                            >
+                                <Clock className="mr-2 h-4 w-4" />
+                                {dropOffTime}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <TimeSelect
+                                value={dropOffTime}
+                                onChange={setDropOffTime}
                             />
                         </PopoverContent>
                     </Popover>

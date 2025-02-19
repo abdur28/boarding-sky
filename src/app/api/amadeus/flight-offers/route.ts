@@ -27,6 +27,12 @@ export const POST = async (req: Request) => {
                 id: offer.id,
                 providerId: 'amadeus',
                 source: offer.source,
+                passengers: {
+                    adults,
+                    children: children || 0,
+                    infants: infants || 0
+                },
+                travelClass,
                 price: {
                     amount: parseFloat(offer.price.grandTotal),
                     currency: offer.price.currency,

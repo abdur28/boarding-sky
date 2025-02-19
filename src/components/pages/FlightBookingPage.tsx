@@ -12,6 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { FlightOffer } from "@/types"
+import { FlightBookingForm } from '../forms/FlightBookingForm'
 
 interface FlightSummaryProps {
   flight: FlightOffer
@@ -125,166 +126,96 @@ const FlightSummary = ({ flight }: FlightSummaryProps) => {
   )
 }
 
-interface PassengerFormProps {
-  index: number
+interface PassengerInfo {
   type: 'adult' | 'child' | 'infant'
-}
-
-const PassengerForm = ({ index, type }: PassengerFormProps) => {
-  return (
-    <CardContent className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">
-          Passenger {index + 1} ({type.charAt(0).toUpperCase() + type.slice(1)})
-        </h3>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor={`firstName-${index}`}>First name*</Label>
-          <Input id={`firstName-${index}`} required />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor={`middleName-${index}`}>Middle name</Label>
-          <Input id={`middleName-${index}`} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor={`lastName-${index}`}>Last name*</Label>
-          <Input id={`lastName-${index}`} required />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Nationality*</Label>
-          <Select>
-            <SelectTrigger>
-              <SelectValue placeholder="Select nationality" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="us">United States</SelectItem>
-              <SelectItem value="uk">United Kingdom</SelectItem>
-              <SelectItem value="ng">Nigeria</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>Passport Number*</Label>
-          <Input required />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Date of birth*</Label>
-          <div className="grid grid-cols-3 gap-2">
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Month" />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({length: 12}, (_, i) => (
-                  <SelectItem key={i + 1} value={String(i + 1)}>
-                    {String(i + 1).padStart(2, '0')}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Day" />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({length: 31}, (_, i) => (
-                  <SelectItem key={i + 1} value={String(i + 1)}>
-                    {String(i + 1).padStart(2, '0')}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Year" />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({length: 100}, (_, i) => {
-                  const year = new Date().getFullYear() - i
-                  return (
-                    <SelectItem key={year} value={String(year)}>
-                      {year}
-                    </SelectItem>
-                  )
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label>Passport Expiry Date*</Label>
-          <Input 
-            type="date" 
-            required 
-            min={new Date().toISOString().split('T')[0]} 
-          />
-        </div>
-      </div>
-
-      {index === 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email address*</Label>
-            <Input 
-              id="email" 
-              type="email" 
-              placeholder="Email for confirmation" 
-              required 
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone number*</Label>
-            <Input id="phone" type="tel" required />
-          </div>
-        </div>
-      )}
-    </CardContent>
-  )
+  firstName: string
+  lastName: string
+  nationality: string
+  passportNumber: string
+  dateOfBirth: Date | undefined
+  passportExpiry: Date | undefined
 }
 
 interface FlightBookingPageProps {
-  flightData: FlightOffer
+  flightData: FlightOffer;
+  passengerCounts: {
+    adults: number;
+    children: number;
+    infants: number;
+  };
 }
 
-export default function FlightBookingPage({ flightData }: FlightBookingPageProps) {
-  console.log(flightData)
+export default function FlightBookingPage({ flightData, passengerCounts }: FlightBookingPageProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [addProtection, setAddProtection] = useState<boolean | null>(null)
-  const [acceptTerms, setAcceptTerms] = useState(false)
+  const [isFormValid, setIsFormValid] = useState(false)
+  const [formData, setFormData] = useState<any>(null)
 
-  const handleProceedToPayment = () => {
-    if (addProtection === null) {
-      alert("Please select whether you want to add flight protection")
-      return
-    }
-    if (!acceptTerms) {
-      alert("Please accept the terms and conditions")
-      return
-    }
-
-    setIsLoading(true)
-    
-    // Pass the flight data to payment page
-    const bookingData = {
-      flightData,
-      protection: addProtection,
-      // Add other booking details here
-    }
-    
-    const encodedData = encodeURIComponent(JSON.stringify(bookingData))
-    router.push(`/flight/payment?bookingData=${encodedData}`)
-  }
+  // Create array of passenger types based on counts
+  const passengerTypes = [
+    ...Array(passengerCounts.adults).fill('adult'),
+    ...Array(passengerCounts.children).fill('child'),
+    ...Array(passengerCounts.infants).fill('infant'),
+  ] as Array<'adult' | 'child' | 'infant'>
 
   const protectionCost = Math.round(flightData.price.amount * 0.1 * 100) / 100
+
+  const handleFormChange = (isValid: boolean, data: any) => {
+    setIsFormValid(isValid)
+    setFormData(data)
+  }
+
+  const handleProceedToPayment = async () => {
+    if (!isFormValid || !formData || addProtection === null) return
+    setIsLoading(true)
+
+    try {
+      const response = await fetch('/api/payment/checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          bookingType: 'flight',
+          offer: flightData,
+          price: addProtection ? flightData.price.amount + protectionCost : flightData.price.amount,
+          bookingDetails: {
+            email: formData.email,
+            phone: formData.phone,
+            firstName: formData.passengers[0].firstName,
+            lastName: formData.passengers[0].lastName,
+            passengerDetails: formData.passengers.map((p: any) => ({
+              type: p.type,
+              firstName: p.firstName,
+              lastName: p.lastName,
+              dateOfBirth: p.dateOfBirth,
+              passportNumber: p.passportNumber,
+            })),
+          },
+          provider: flightData.providerId,
+          addProtection: addProtection,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session')
+      }
+
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        throw new Error('Invalid checkout session response')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      // Handle error appropriately
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -294,16 +225,13 @@ export default function FlightBookingPage({ flightData }: FlightBookingPageProps
         </div>
 
         <div className="lg:col-span-8 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Who's traveling?</CardTitle>
-              <CardDescription>
-                Names must match government-issued photo ID exactly
-              </CardDescription>
-            </CardHeader>
-            <PassengerForm index={0} type="adult" />
-          </Card>
+          {/* Booking Form */}
+          <FlightBookingForm
+            onFormChange={handleFormChange}
+            passengerTypes={passengerTypes}
+          />
 
+          {/* Flight Protection */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -317,19 +245,15 @@ export default function FlightBookingPage({ flightData }: FlightBookingPageProps
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-primary" />
-                    <span>Trip cancellation and interruption up to 100% of trip cost</span>
+                    <span>Trip cancellation coverage up to 100% of trip cost</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-primary" />
-                    <span>Medical expense up to $25,000 per person</span>
+                    <span>Medical expense coverage up to $25,000 per person</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-primary" />
-                    <span>Baggage loss up to $500 or delay up to $300 per person</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span>Travel delay up to $500 per person</span>
+                    <span>Baggage protection up to $500 per person</span>
                   </div>
                 </div>
 
@@ -344,7 +268,7 @@ export default function FlightBookingPage({ flightData }: FlightBookingPageProps
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="no" id="protection-no" />
                       <Label htmlFor="protection-no" className="font-normal">
-                        No, I'll risk my ${flightData.price.amount?.toFixed(2)} booking
+                        No, I'll risk my ${flightData.price.amount?.toFixed(2)} trip
                       </Label>
                     </div>
                   </RadioGroup>
@@ -353,60 +277,13 @@ export default function FlightBookingPage({ flightData }: FlightBookingPageProps
             </CardContent>
           </Card>
 
+          {/* Price Summary and Proceed */}
           <Card>
             <CardHeader>
               <CardTitle>Review and Book</CardTitle>
               <CardDescription>Please review all details before proceeding</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Important Information</AlertTitle>
-                <AlertDescription>
-                <ul className="list-disc pl-4 space-y-2 text-sm">
-                    <li>
-                      {flightData.meta?.lastTicketingDate && (
-                        `Tickets must be purchased by ${formatDate(flightData.meta.lastTicketingDate)}`
-                      )}
-                    </li>
-                    <li>
-                      {flightData.fareDetails?.some(detail => detail.features?.refundable) 
-                        ? `Tickets are refundable with conditions.`
-                        : `Tickets are non-refundable.`
-                      }
-                    </li>
-                    <li>Name changes are not permitted. Ensure all details match your ID.</li>
-                    <li>
-                      {flightData.fareDetails && flightData.fareDetails[0].baggage.checked 
-                        ? `Checked baggage is included (${flightData.fareDetails[0].baggage.checked.quantity} bag per person).`
-                        : `Baggage fees may apply and vary by airline.`
-                      }
-                    </li>
-                    <li>Fares are not guaranteed until ticketed.</li>
-                    {flightData.meta?.numberOfBookableSeats && (
-                      <li>{flightData.meta.numberOfBookableSeats} seats remaining at this price.</li>
-                    )}
-                  </ul>
-                </AlertDescription>
-              </Alert>
-
-              <div className="flex items-start space-x-2">
-                <Checkbox 
-                  id="terms" 
-                  checked={acceptTerms} 
-                  onCheckedChange={(checked) => setAcceptTerms(checked as boolean)} 
-                />
-                <Label htmlFor="terms" className="text-sm">
-                  I acknowledge that I have reviewed the Privacy Statement, Government Travel Advice, 
-                  and have reviewed and accept the Rules & Restrictions and Terms of Use.
-                  {flightData.fareDetails?.some(detail => detail.features?.refundable) && (
-                    <span className="block mt-1 text-muted-foreground">
-                      Cancellation fees may apply as per the fare rules.
-                    </span>
-                  )}
-                </Label>
-              </div>
-
               <div className="bg-primary/5 p-4 rounded-lg space-y-2">
                 <div className="flex justify-between items-center">
                   <span>Flight Cost</span>
@@ -442,7 +319,7 @@ export default function FlightBookingPage({ flightData }: FlightBookingPageProps
               </Button>
               <Button 
                 onClick={handleProceedToPayment} 
-                disabled={isLoading || !acceptTerms || addProtection === null}
+                disabled={isLoading || !isFormValid || addProtection === null}
                 className="min-w-[140px]"
               >
                 {isLoading ? (

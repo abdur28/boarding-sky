@@ -8,6 +8,8 @@ type DashboardState = {
     isLoading: boolean; 
     info: any;
     users: Array<any>
+    bookings: Array<any>;
+    receipts: Array<any>;
     blogs: Array<any>;
     hotels: Array<any>;
     tours: Array<any>;
@@ -18,6 +20,9 @@ type DashboardState = {
     deleteImages(urls: string[]): Promise<void>;
     getInfo(): Promise<void>;
     getUsers(): Promise<void>;
+    getBookings(filter?: string): Promise<void>;
+    getReceipts(filter?: string): Promise<void>;
+    updateBookings(update: any): Promise<void>;
     getBlogs(): Promise<void>;
     getHotels(): Promise<void>;
     getTours(): Promise<void>;
@@ -31,6 +36,8 @@ export const useDashboard = create<DashboardState>((set, get) => ({
     isLoading: false,
     info: {},
     users: [],
+    bookings: [],
+    receipts: [],
     blogs: [],
     hotels: [],
     tours: [],
@@ -92,6 +99,78 @@ export const useDashboard = create<DashboardState>((set, get) => ({
             set({ isLoading: false });
         }
     },
+    getBookings: async (filter: string = 'all') => {
+        set({ isLoading: true });
+        try {
+            const response = await fetch("/api/actions/get-bookings", {
+                cache: "no-store",
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ filter }),
+            });
+            const data = await response.json();
+            set({ isLoading: false, bookings: data.data });
+            return data;
+        } catch (err) {
+            console.error("Failed to get bookings:", err);
+            set({ isLoading: false });
+        }
+    },
+    getReceipts: async (filter: string = 'all') => {
+        set({ isLoading: true });
+        try {
+            const response = await fetch("/api/actions/get-receipts", {
+                cache: "no-store",
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ filter }),
+            });
+            const data = await response.json();
+            set({ isLoading: false, receipts: data.data });
+            return data;
+        } catch (err) {
+            console.error("Failed to get receipts:", err);
+            set({ isLoading: false });
+        }
+    },
+    updateBookings: async (update) => {
+        set({ isLoading: true });
+        try {
+            const response = await fetch("/api/actions/update-booking", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(update),
+            });
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to update booking');
+            }
+
+            // Update local state
+            set(state => ({
+                bookings: state.bookings.map(booking => 
+                    booking.bookingId === update.bookingId 
+                        ? { ...booking, ...update }
+                        : booking
+                )
+            }));
+
+            set({ isLoading: false });
+            return data;
+        } catch (err) {
+            console.error("Failed to update booking:", err);
+            set({ isLoading: false });
+            throw err;
+        }
+    },
+
     getBlogs: async () => {
         set({ isLoading: true });
         try {

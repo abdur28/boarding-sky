@@ -1,26 +1,23 @@
 import Header from '@/components/Header'
 import CarBookingPage from '@/components/pages/CarBookingPage'
 
-export default function BookingPage({ 
+export default async function BookingPage({ 
   searchParams 
 }: { 
-  searchParams: { 
-    offerId: string
-    pickupDate: string
-    dropoffDate: string
-    pickupLocation: string
-    dropoffLocation: string
-  }
+  searchParams: any
 }) {
+  const { offerId, pickupDate, dropoffDate, pickupLocation, dropoffLocation, pickupTime, dropoffTime } = await searchParams
   return (
     <div className="w-full h-full flex flex-col justify-center items-center">
       <Header title="Car Rental Booking" />
       <CarBookingPage 
-        offerId={searchParams.offerId}
-        pickupDate={searchParams.pickupDate}
-        dropoffDate={searchParams.dropoffDate}
-        pickupLocation={searchParams.pickupLocation}
-        dropoffLocation={searchParams.dropoffLocation}
+        offerId={offerId}
+        pickupDate={pickupDate}
+        dropoffDate={dropoffDate}
+        pickupLocation={pickupLocation}
+        dropoffLocation={dropoffLocation}
+        pickupTime={pickupTime}
+        dropoffTime={dropoffTime}
       />
     </div>
   )

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { Search, Calendar, Receipt } from "lucide-react";
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, Calendar, Receipt, Shield, Download, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -10,53 +10,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import Link from "next/link";
+import { format, parseISO } from "date-fns";
+import { useDashboard } from '@/hooks/useDashboard';
 
-const TRANSACTION_TYPES = ["All", "Flights", "Hotels", "Cars", "Tours"];
-const TRANSACTION_STATUS = ["All", "Success", "Failed", "Pending", "Refunded"];
-
-// Sample data - replace with your actual data source
-const SAMPLE_TRANSACTIONS = [
-  {
-    id: "TXN-001",
-    receiptId: "RCP-2024-001",
-    userEmail: "john.doe@example.com",
-    description: "Flight Booking - New York to London",
-    type: "Flights",
-    status: "Success",
-    date: "2024-03-15",
-    price: 850.00
-  },
-  {
-    id: "TXN-002",
-    receiptId: "RCP-2024-002",
-    userEmail: "jane.smith@example.com",
-    description: "Luxury Hotel Booking - 5 nights",
-    type: "Hotels",
-    status: "Pending",
-    date: "2024-03-16",
-    price: 1200.00
-  },
-  {
-    id: "TXN-003",
-    receiptId: "RCP-2024-003",
-    userEmail: "abdurrahmanidris28@gmail.com",
-    description: "City Tour Package - Paris",
-    type: "Tours",
-    status: "Failed",
-    date: "2024-03-17",
-    price: 299.99
-  },
-  {
-    id: "TXN-004",
-    receiptId: "RCP-2024-004",
-    userEmail: "Abdurrahmanidris28@gmail.com",
-    description: "Car Rental - SUV",
-    type: "Cars",
-    status: "Refunded",
-    date: "2024-03-18",
-    price: 450.00
-  }
-];
+const TRANSACTION_TYPES = ["All", "flight", "hotel", "car"];
+const TRANSACTION_STATUS = ["All", "paid", "failed", "refunded"];
 
 interface TransactionsProps {
   userAsString: string;
@@ -67,43 +28,37 @@ export default function Transactions({ userAsString }: TransactionsProps) {
   const role = user?.role?.toLowerCase() || "user";
   const isHigherRole = role === 'admin' || role === 'manager';
 
+  const { receipts, isLoading, getReceipts } = useDashboard();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
 
-  const filteredTransactions = useMemo(() => {
-    let filtered = SAMPLE_TRANSACTIONS;
-    
-    // If not admin/manager, only show user's own transactions
-    if (!isHigherRole) {
-      filtered = SAMPLE_TRANSACTIONS.filter(transaction => 
-        transaction.userEmail.toLowerCase() === user.email.toLowerCase()
-      );
-    }
+  useEffect(() => {
+    getReceipts(isHigherRole ? 'all' : user._id);
+  }, [getReceipts, isHigherRole, user._id]);
 
-    return filtered.filter(transaction => {
+  const filteredTransactions = useMemo(() => {
+    return receipts.filter(receipt => {
       const matchesSearch = searchQuery.toLowerCase() === "" || 
-        (isHigherRole && transaction.userEmail.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        transaction.receiptId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        transaction.description.toLowerCase().includes(searchQuery.toLowerCase());
+        (isHigherRole && receipt.user.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        receipt.receiptId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        receipt.itemDetails.description.toLowerCase().includes(searchQuery.toLowerCase());
       
-      const matchesType = selectedType === "All" || transaction.type === selectedType;
-      const matchesStatus = selectedStatus === "All" || transaction.status === selectedStatus;
+      const matchesType = selectedType === "All" || receipt.bookingType === selectedType;
+      const matchesStatus = selectedStatus === "All" || receipt.status === selectedStatus;
       
       return matchesSearch && matchesType && matchesStatus;
     });
-  }, [searchQuery, selectedType, selectedStatus, isHigherRole, user.email]);
+  }, [receipts, searchQuery, selectedType, selectedStatus, isHigherRole]);
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case "Flights":
+      case "flight":
         return "bg-blue-100 text-blue-800";
-      case "Hotels":
+      case "hotel":
         return "bg-purple-100 text-purple-800";
-      case "Cars":
+      case "car":
         return "bg-orange-100 text-orange-800";
-      case "Tours":
-        return "bg-indigo-100 text-indigo-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -111,65 +66,103 @@ export default function Transactions({ userAsString }: TransactionsProps) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Success":
+      case "paid":
         return "text-green-600";
-      case "Failed":
+      case "failed":
         return "text-red-600";
-      case "Pending":
-        return "text-yellow-600";
-      case "Refunded":
+      case "refunded":
         return "text-blue-600";
       default:
         return "text-gray-600";
     }
   };
 
-  const renderTransaction = (transaction: typeof SAMPLE_TRANSACTIONS[0]) => (
-    <div
-      key={transaction.id}
-      className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow space-y-4 md:space-y-0"
+  const renderTransaction = (receipt: any) => (
+    <Card
+      key={receipt.receiptId}
+      className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => window.location.href = `/receipt/${receipt.receiptId}`}
     >
-      <div className="flex flex-col space-y-2 flex-1">
-        <div className="flex items-center space-x-2">
-          <Receipt className="h-4 w-4 text-gray-500" />
-          <span className="font-medium text-gray-900">
-            {transaction.receiptId}
-          </span>
-          <span className={`px-2 py-1 rounded-full text-xs ${getTypeColor(transaction.type)}`}>
-            {transaction.type}
-          </span>
+      <div className="flex flex-col space-y-4">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-gray-500" />
+              <span className="font-medium">{receipt.receiptId}</span>
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(receipt.bookingType)}`}>
+                {receipt.bookingType}
+              </span>
+            </div>
+            
+            {isHigherRole && (
+              <div className="text-sm text-gray-500">
+                {receipt.user.name} ({receipt.user.email})
+              </div>
+            )}
+            
+            <div className="text-sm font-medium">{receipt.itemDetails.description}</div>
+          </div>
+
+          <div className="flex flex-col md:items-end gap-2">
+            <div className={`font-medium ${getStatusColor(receipt.status)}`}>
+              {receipt.status}
+            </div>
+            <div className="text-lg font-bold">
+              ${receipt.paymentDetails.amount.toFixed(2)}
+            </div>
+          </div>
         </div>
-        
-        {/* Only show email for admin/manager */}
-        {isHigherRole && (
-          <span className="text-sm text-gray-500">
-            {transaction.userEmail}
-          </span>
+
+        {/* Details */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div>
+            <div className="text-gray-500">Transaction ID</div>
+            <div className="font-medium truncate">{receipt.paymentDetails.transactionId}</div>
+          </div>
+          <div>
+            <div className="text-gray-500">Payment Method</div>
+            <div className="font-medium capitalize">{receipt.paymentDetails.paymentMethod}</div>
+          </div>
+          <div>
+            <div className="text-gray-500">Date</div>
+            <div className="font-medium">{format(parseISO(receipt.transactionDate), 'MMM dd, yyyy HH:mm')}</div>
+          </div>
+          {isHigherRole && (<div>
+            <div className="text-gray-500">Provider</div>
+            <div className="font-medium">{receipt.provider}</div>
+          </div>)}
+        </div>
+
+        {/* Extra Info */}
+        {receipt.itemDetails.protection?.included && (
+          <div className="flex items-center gap-2 text-sm text-green-600">
+            <Shield className="h-4 w-4" />
+            <span>Travel Protection Included (${receipt.itemDetails.protection.amount.toFixed(2)})</span>
+          </div>
         )}
-        
-        <span className="text-sm text-gray-700">
-          {transaction.description}
-        </span>
-      </div>
-      
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
-        <div className="flex items-center space-x-2 text-gray-500">
-          <Calendar className="h-4 w-4" />
-          <span className="text-sm">
-            {new Date(transaction.date).toLocaleDateString()}
-          </span>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/receipt/${receipt.receiptId}`}>
+              <Receipt className="h-4 w-4 mr-2" />
+              View Details
+            </Link>
+          </Button>
         </div>
-        
-        <span className={`font-medium ${getStatusColor(transaction.status)}`}>
-          {transaction.status}
-        </span>
-        
-        <span className="font-medium text-lg">
-          ${transaction.price.toFixed(2)}
-        </span>
       </div>
-    </div>
+    </Card>
   );
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-lg text-muted-foreground">Loading Receipts...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col space-y-6">
@@ -196,7 +189,7 @@ export default function Transactions({ userAsString }: TransactionsProps) {
           <SelectContent>
             {TRANSACTION_TYPES.map(type => (
               <SelectItem key={type} value={type}>
-                {type}
+                {type.charAt(0).toUpperCase() + type.slice(1)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -211,7 +204,7 @@ export default function Transactions({ userAsString }: TransactionsProps) {
           <SelectContent>
             {TRANSACTION_STATUS.map(status => (
               <SelectItem key={status} value={status}>
-                {status}
+                {status.charAt(0).toUpperCase() + status.slice(1)}
               </SelectItem>
             ))}
           </SelectContent>

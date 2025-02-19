@@ -16,6 +16,8 @@ interface CarSearchPageProps {
     dropOffLocation?: string
     pickUpDate: string
     dropOffDate: string
+    pickUpTime: string;    
+    dropOffTime: string;  
     page: number
     priceRangeStr?: string
     transmission?: string[]
@@ -30,6 +32,8 @@ const CarSearchPage = ({
     dropOffLocation,
     pickUpDate,
     dropOffDate,
+    pickUpTime,        
+    dropOffTime, 
     page = 1,
     priceRangeStr,
     transmission,
@@ -56,6 +60,8 @@ const CarSearchPage = ({
                 dropOffLocation,
                 pickUpDate,
                 dropOffDate,
+                pickUpTime,   
+                dropOffTime, 
             }
 
             await searchCarOffers(params)
@@ -76,7 +82,7 @@ const CarSearchPage = ({
             }
         }
         fetchCars()
-    }, [pickUpLocation, dropOffLocation, pickUpDate, dropOffDate, 
+    }, [pickUpLocation, dropOffLocation, pickUpDate, dropOffDate, pickUpTime, dropOffTime,
         priceRangeStr, transmission, category, features, fuelType, vendor])
 
     useEffect(() => {
@@ -144,7 +150,9 @@ const CarSearchPage = ({
                             pickupDate: pickUpDate,
                             dropoffDate: dropOffDate,
                             pickupLocation: pickUpLocation,
-                            dropoffLocation: dropOffLocation
+                            dropoffLocation: dropOffLocation,
+                            pickupTime: pickUpTime,    
+                            dropoffTime: dropOffTime,    
                         }}
                     />
                 ))}

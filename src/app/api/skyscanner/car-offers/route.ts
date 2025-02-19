@@ -70,21 +70,25 @@
 //             dropOffLocation,
 //             pickUpDate,
 //             dropOffDate,
+//             pickUpTime,      // Added
+//             dropOffTime,     // Added
 //             driverAge = 30,
 //             market = 'UK',
 //             locale = 'en-GB',
 //             currency = 'GBP',
 //         } = await req.json();
 
-//         // console.log(123, pickUpLocation, dropOffLocation, pickUpDate, dropOffDate, driverAge, market, locale, currency, userIp);
+//         // Combine date and time
+//         const pickupDateTime = `${pickUpDate}T${pickUpTime}:00`;
+//         const dropoffDateTime = `${dropOffDate}T${dropOffTime}:00`;
 
 //         // Initial search creation
 //         const createResponse = await createSearch({
 //             market,
 //             locale,
 //             currency,
-//             pickUpDate,
-//             dropOffDate,
+//             pickUpDate: pickupDateTime,      // Updated to include time
+//             dropOffDate: dropoffDateTime,    // Updated to include time
 //             pickUpLocation,
 //             dropOffLocation,
 //             driverAge,
@@ -141,8 +145,8 @@
 //                     coordinates: quote.dropoffLocation.coordinates
 //                 },
                 
-//                 pickupDateTime: pickUpDate,
-//                 dropoffDateTime: dropOffDate,
+//                 pickupDateTime: pickupDateTime,    // Updated to include time
+//                 dropoffDateTime: dropoffDateTime,  // Updated to include time
                 
 //                 price: {
 //                     amount: quote.price.amount,

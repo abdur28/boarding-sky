@@ -15,6 +15,8 @@ interface CarBookingPageProps {
     offerId: string
     pickupDate: string
     dropoffDate: string
+    pickupTime: string
+    dropoffTime: string
     pickupLocation: string
     dropoffLocation: string
 }
@@ -25,6 +27,8 @@ const CarBookingPage = ({
     dropoffDate,
     pickupLocation,
     dropoffLocation,
+    pickupTime,
+    dropoffTime
 }: CarBookingPageProps) => {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(true)
@@ -32,6 +36,16 @@ const CarBookingPage = ({
     const [carOffer, setCarOffer] = useState<CarOffer | null>(null)
     const [isFormValid, setIsFormValid] = useState(false)
     const [formData, setFormData] = useState<any>(null)
+
+    const formatDateTime = (date: string, time: string) => {
+        const formattedDate = new Date(date).toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+        return `${formattedDate}, ${time}`;
+    };
 
     useEffect(() => {
         const fetchCarOffer = async () => {
@@ -50,6 +64,8 @@ const CarBookingPage = ({
                         dropOffLocation: dropoffLocation,
                         pickUpDate: pickupDate,
                         dropOffDate: dropoffDate,
+                        pickUpTime: pickupTime,
+                        dropOffTime: dropoffTime
                     }),
                 })
 
@@ -73,7 +89,7 @@ const CarBookingPage = ({
         if (offerId) {
             fetchCarOffer()
         }
-    }, [offerId, pickupLocation, dropoffLocation, pickupDate, dropoffDate])
+    }, [offerId, pickupLocation, dropoffLocation, pickupDate, dropoffDate, pickupTime, dropoffTime])
 
 
     
@@ -82,10 +98,11 @@ const CarBookingPage = ({
         setFormData(data)
     }
 
+    // Updated handleBookNow function for CarBookingPage
     const handleBookNow = async () => {
         if (!carOffer || !isFormValid || !formData) return;
         setIsLoading(true);
-    
+
         try {
             const response = await fetch('/api/payment/checkout-session', {
                 method: 'POST',
@@ -93,37 +110,46 @@ const CarBookingPage = ({
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    carOffer,
+                    bookingType: 'car',
+                    offer: carOffer,
+                    price: carOffer.price.amount,
                     bookingDetails: {
+                        // Base booking details
+                        email: formData.email,
+                        phone: formData.phone,
+                        firstName: formData.firstName,
+                        lastName: formData.lastName,
+                        middlName: formData.middleName,
+
+                        
+                        // Car specific details
                         pickupDate,
                         dropoffDate,
+                        pickupTime,
+                        dropoffTime,
                         pickupLocation,
                         dropoffLocation,
-                        driverDetails: {
-                            firstName: formData.firstName,
-                            middleName: formData.middleName,
-                            lastName: formData.lastName,
-                            email: formData.email,
-                            phone: formData.phone,
-                            country: formData.country,
-                            licenseNumber: formData.licenseNumber,
-                            dateOfBirth: `${formData.birthYear}-${formData.birthMonth.padStart(2, '0')}-${formData.birthDay.padStart(2, '0')}`,
-                            licenseExpiry: formData.licenseExpiry
-                        }
-                    }
+                        licenseNumber: formData.licenseNumber,
+                        dateOfBirth: formData.birthDate,
+                    },
+                    provider: carOffer.provider
                 }),
             });
-    
+
             const data = await response.json();
-    
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to create checkout session');
+            }
+
             if (data.url) {
-                window.location.href = data.url; // Redirect to Stripe Checkout
+                window.location.href = data.url;
             } else {
-                throw new Error('Failed to create checkout session');
+                throw new Error('Invalid checkout session response');
             }
         } catch (error) {
             console.error('Error:', error);
-            setError('Failed to process payment. Please try again.');
+            setError(error instanceof Error ? error.message : 'Failed to process payment. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -186,23 +212,44 @@ const CarBookingPage = ({
                                 </div>
 
                                 {/* Rental Details */}
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                                        <div>
-                                            <p className="font-medium">Pick-up: {pickupDate}</p>
-                                            <p className="font-medium">Drop-off: {dropoffDate}</p>
+                                <div className="space-y-4 text-sm">
+                                    {/* Pickup Details */}
+                                    <div className="p-3 rounded-lg border">
+                                        <div className="flex items-start gap-2 mb-2">
+                                            <Calendar className="h-4 w-4 text-muted-foreground mt-1" />
+                                            <div>
+                                                <p className="text-xs uppercase text-muted-foreground">Pickup</p>
+                                                <p className="font-medium">
+                                                    {formatDateTime(pickupDate, pickupTime)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                            <MapPin className="h-4 w-4 text-muted-foreground mt-1" />
+                                            <div>
+                                                <p className="text-xs uppercase text-muted-foreground">Location</p>
+                                                <p className="font-medium">{carOffer.pickupLocation.name}</p>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                                        <div>
-                                            <p className="font-medium">{carOffer.pickupLocation.name}</p>
-                                            {dropoffLocation !== pickupLocation && (
-                                                <p className="text-muted-foreground">
-                                                    Return to: {carOffer.dropoffLocation.name}
+
+                                    {/* Dropoff Details */}
+                                    <div className="p-3 rounded-lg border">
+                                        <div className="flex items-start gap-2 mb-2">
+                                            <Calendar className="h-4 w-4 text-muted-foreground mt-1" />
+                                            <div>
+                                                <p className="text-xs uppercase text-muted-foreground">Drop-off</p>
+                                                <p className="font-medium">
+                                                    {formatDateTime(dropoffDate, dropoffTime)}
                                                 </p>
-                                            )}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                            <MapPin className="h-4 w-4 text-muted-foreground mt-1" />
+                                            <div>
+                                                <p className="text-xs uppercase text-muted-foreground">Location</p>
+                                                <p className="font-medium">{carOffer.dropoffLocation.name}</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

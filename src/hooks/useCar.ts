@@ -9,6 +9,8 @@ export interface CarSearchParams {
   dropOffLocation?: string;
   pickUpDate: string;
   dropOffDate: string;
+  pickUpTime: string;    
+  dropOffTime: string;  
   priceRange?: {
     min?: number;
     max?: number;
@@ -69,6 +71,8 @@ export const useCar = create<CarState>((set, get) => ({
           dropOffLocation: params.dropOffLocation,
           pickUpDate: params.pickUpDate,
           dropOffDate: params.dropOffDate,
+          pickUpTime: params.pickUpTime,    
+          dropOffTime: params.dropOffTime,  
           driverAge: params.driverAge || 30,
           market: params.market || 'UK',
           locale: params.locale || 'en-GB',

@@ -221,8 +221,10 @@ const FlightRoute = ({
 const FlightCard = ({
   offer,
   origin,
-  destination
-}: { offer: string, origin: string, destination: string}) => {
+  destination,
+  departureDate,
+  returnDate
+}: { offer: string, origin: string, destination: string, departureDate: string, returnDate?: string}) => {
   const [isFirstDetailOpen, setIsFirstDetailOpen] = useState(false)
   const [isSecondDetailOpen, setIsSecondDetailOpen] = useState(false)
   const router = useRouter()
@@ -259,8 +261,11 @@ const FlightCard = ({
 
   const handleBooking = (e: React.MouseEvent) => {
     e.stopPropagation()
-    const encodedData = encodeURIComponent(JSON.stringify(flightOffer))
-    router.push(`/flight/booking?flightData=${encodedData}`)
+    router.push(`/flight/booking?offerId=${flightOffer.id}&origin=${origin}&destination=${destination}`
+      +`&departureDate=${departureDate}&returnDate=${returnDate}`
+      +`&adults=${flightOffer.passengers.adults}&children=${flightOffer.passengers.children}&infants=${flightOffer.passengers.infants}`
+      +`&travelClass=${flightOffer.travelClass}&providerId=${flightOffer.providerId}`
+    )
   }
 
   return (

@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { Search, Calendar, Pencil, Loader2 } from "lucide-react";
+import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { Search, Calendar, Pencil, Loader2, Check, Clock, Ban, Plane, Building2, Car } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -21,282 +22,344 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { useDashboard } from '@/hooks/useDashboard';
+import { differenceInDays, format, parseISO } from 'date-fns';
+import Image from 'next/image';
 
-interface Booking {
-  id: string;
-  userEmail: string;
-  description: string;
-  type: string;
-  status: string;
-  date: string;
-  amount: number;
-  isRefundable: boolean;
-}
-
-const BOOKING_STATUS = ["Paid", "Unpaid", "Cancelled", "Refund"];
+const BOOKING_STATUS = ["confirmed", "pending", "cancelled", "completed"];
 const FILTER_STATUS = ["All", ...BOOKING_STATUS];
-const BOOKING_TYPES = ["All", "Flights", "Hotels", "Cars", "Tours"];
-
-const SAMPLE_BOOKINGS: Booking[] = [
-  {
-    id: "BK-001",
-    userEmail: "john.doe@example.com",
-    description: "Round-trip flight to New York",
-    type: "Flights",
-    status: "Paid",
-    date: "2024-03-15",
-    amount: 450,
-    isRefundable: true
-  },
-  {
-    id: "BK-002",
-    userEmail: "jane.smith@example.com",
-    description: "3 nights at Hilton Hotel",
-    type: "Hotels",
-    status: "Unpaid",
-    date: "2024-03-20",
-    amount: 600,
-    isRefundable: false
-  },
-  {
-    id: "BK-003",
-    userEmail: "alice.j@example.com",
-    description: "City Tour Package",
-    type: "Tours",
-    status: "Paid",
-    date: "2024-03-10",
-    amount: 200,
-    isRefundable: false
-  },
-  {
-    id: "BK-004",
-    userEmail: "Abdurrahmanidris28@gmail.com",
-    description: "City Tour Package",
-    type: "Tours",
-    status: "Paid",
-    date: "2024-03-10",
-    amount: 200,
-    isRefundable: false
-  },
-  {
-    id: "BK-005",
-    userEmail: "abdurrahmanidris28@gmail.com",
-    description: "Round-trip flight to New York",
-    type: "Flights",
-    status: "Paid",
-    date: "2024-03-15",
-    amount: 450,
-    isRefundable: true
-  },
-];
+const BOOKING_TYPES = ["All", "flight", "hotel", "car"];
 
 export default function Bookings({ userAsString }: { userAsString: string }) {
+  const router = useRouter();
   const user = JSON.parse(userAsString);
   const role = user?.role?.toLowerCase() || "user";
   const isHigherRole = role === 'admin' || role === 'manager';
 
+  const { bookings, isLoading, getBookings, updateBookings } = useDashboard();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [selectedType, setSelectedType] = useState("All");
-  const [bookings, setBookings] = useState(SAMPLE_BOOKINGS);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
-  const [showRefundDialog, setShowRefundDialog] = useState(false);
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [editingBooking, setEditingBooking] = useState<any | null>(null);
+  const [updateLoading, setUpdateLoading] = useState(false);
+
+  useEffect(() => {
+    getBookings(isHigherRole ? 'all' : user._id);
+  }, [getBookings, isHigherRole, user._id]);
 
   const filteredBookings = useMemo(() => {
-    let filtered = bookings;
-    
-    // If not admin/manager, only show user's own bookings
-    if (!isHigherRole) {
-      filtered = bookings.filter(booking => booking.userEmail.toLowerCase() === user.email.toLowerCase());
-    }
-
-    return filtered.filter(booking => {
+    return bookings.filter(booking => {
       const matchesSearch = searchQuery.toLowerCase() === "" || 
-        (isHigherRole && booking.userEmail.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        booking.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        booking.description.toLowerCase().includes(searchQuery.toLowerCase());
+        (isHigherRole && booking.user.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        booking.bookingId.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesStatus = selectedStatus === "All" || booking.status === selectedStatus;
-      const matchesType = selectedType === "All" || booking.type === selectedType;
+      const matchesType = selectedType === "All" || booking.bookingType === selectedType;
       
       return matchesSearch && matchesStatus && matchesType;
     });
-  }, [bookings, searchQuery, selectedStatus, selectedType, isHigherRole, user.email]);
+  }, [bookings, searchQuery, selectedStatus, selectedType, isHigherRole]);
 
-  const handleEdit = (booking: Booking) => {
+  const handleEdit = (booking: any) => {
     setEditingBooking(booking);
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdateBooking = (updatedBooking: Booking) => {
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setBookings(prevBookings =>
-        prevBookings.map(booking =>
-          booking.id === updatedBooking.id ? updatedBooking : booking
-        )
-      );
-      setIsLoading(false);
+  const handleUpdateBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingBooking) return;
+    
+    setUpdateLoading(true);
+    try {
+      await updateBookings({
+        bookingId: editingBooking.bookingId,
+        status: editingBooking.status,
+        isRefundable: editingBooking.isRefundable
+      });
+      
       setIsEditDialogOpen(false);
       setEditingBooking(null);
-    }, 1000);
-  };
-
-  const handleCancelRequest = (booking: Booking) => {
-    setSelectedBooking(booking);
-    setShowCancelDialog(true);
-  };
-
-  const handleRefundRequest = (booking: Booking) => {
-    setSelectedBooking(booking);
-    setShowRefundDialog(true);
-  };
-
-  const confirmCancel = () => {
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      if (selectedBooking) {
-        setBookings(prevBookings =>
-          prevBookings.map(booking =>
-            booking.id === selectedBooking.id 
-              ? { ...booking, status: "Cancelled" }
-              : booking
-          )
-        );
-      }
-      setIsLoading(false);
-      setShowCancelDialog(false);
-      setSelectedBooking(null);
-    }, 1000);
-  };
-
-  const confirmRefund = () => {
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      if (selectedBooking) {
-        setBookings(prevBookings =>
-          prevBookings.map(booking =>
-            booking.id === selectedBooking.id 
-              ? { ...booking, status: "Refund" }
-              : booking
-          )
-        );
-      }
-      setIsLoading(false);
-      setShowRefundDialog(false);
-      setSelectedBooking(null);
-    }, 1000);
+    } catch (error) {
+      console.error('Failed to update booking:', error);
+    } finally {
+      setUpdateLoading(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Paid":
+    switch (status.toLowerCase()) {
+      case "confirmed":
+      case "paid":
         return "bg-green-100 text-green-800";
-      case "Unpaid":
+      case "pending":
         return "bg-yellow-100 text-yellow-800";
-      case "Cancelled":
+      case "cancelled":
+      case "failed":
         return "bg-red-100 text-red-800";
-      case "Refund":
+      case "completed":
+      case "refunded":
         return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-  const renderBookingActions = (booking: Booking) => {
-    if (isHigherRole) {
-      return (
-        <button
-          onClick={() => handleEdit(booking)}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          disabled={isLoading}
-        >
-          <Pencil className="h-4 w-4 text-gray-500" />
-        </button>
-      );
+  const getStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "confirmed":
+      case "paid":
+      case "completed":
+        return <Check className="h-4 w-4" />;
+      case "pending":
+        return <Clock className="h-4 w-4" />;
+      case "cancelled":
+      case "failed":
+        return <Ban className="h-4 w-4" />;
+      default:
+        return null;
     }
-
-    if (booking.status === "Unpaid") {
-      return (
-        <Button 
-          variant="outline" 
-          onClick={() => handleCancelRequest(booking)}
-          className="text-sm"
-          disabled={isLoading}
-        >
-          Cancel Booking
-        </Button>
-      );
-    }
-
-    if (booking.status === "Paid" && booking.isRefundable) {
-      return (
-        <Button 
-          variant="outline" 
-          onClick={() => handleRefundRequest(booking)}
-          className="text-sm"
-          disabled={isLoading}
-        >
-          Request Refund
-        </Button>
-      );
-    }
-
-    return null;
   };
 
-  const renderBookingItem = (booking: Booking) => (
-    <div
-      key={booking.id}
-      className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow space-y-4 md:space-y-0"
-    >
-      <div className="flex flex-col space-y-2">
-        <div className="flex items-center space-x-2">
-          <span className="font-medium text-gray-900">
-            {booking.id}
-          </span>
-          <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(booking.status)}`}>
-            {booking.status}
-          </span>
-          {booking.status === "Paid" && (
-            <span className={`px-2 py-1 rounded-full text-xs ${
-              booking.isRefundable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-            }`}>
-              {booking.isRefundable ? 'Refundable' : 'Non-refundable'}
-            </span>
+  const getBookingTypeIcon = (type: string) => {
+    switch (type) {
+      case "flight":
+        return <Plane className="h-4 w-4" />;
+      case "hotel":
+        return <Building2 className="h-4 w-4" />;
+      case "car":
+        return <Car className="h-4 w-4" />;
+      default:
+        return null;
+    }
+  };
+
+  const formatDate = (dateString: string | Date) => {
+    if (!dateString) return '';
+    return format(typeof dateString === 'string' ? parseISO(dateString) : dateString, 'MMM dd, yyyy');
+  };
+
+  const formatDateTime = (dateString: string) => {
+    if (!dateString) return '';
+    return format(parseISO(dateString), 'MMM dd, yyyy HH:mm');
+  };
+
+  const renderFlightDetails = (details: any) => {
+    const firstSegment = details?.itineraries?.[0]?.segments?.[0];
+    const lastSegment = details?.itineraries?.[0]?.segments?.slice(-1)[0];
+    
+    return (
+      <div className="grid grid-cols-2 gap-3 mt-3">
+        <div className="space-y-1">
+          <div className="text-sm font-medium text-gray-500">Departure</div>
+          <div className="text-sm">{formatDateTime(firstSegment?.departure?.at)}</div>
+          <div className="text-base font-semibold">{firstSegment?.departure?.iataCode}</div>
+          {firstSegment?.departure?.terminal && (
+            <div className="text-sm text-gray-500">Terminal {firstSegment.departure.terminal}</div>
           )}
         </div>
-        {isHigherRole && (
-          <span className="text-sm text-gray-500">
-            {booking.userEmail}
-          </span>
-        )}
-        <span className="text-sm">
-          {booking.description}
-        </span>
+        
+        <div className="space-y-1">
+          <div className="text-sm font-medium text-gray-500">Arrival</div>
+          <div className="text-sm">{formatDateTime(lastSegment?.arrival?.at)}</div>
+          <div className="text-base font-semibold">{lastSegment?.arrival?.iataCode}</div>
+          {lastSegment?.arrival?.terminal && (
+            <div className="text-sm text-gray-500">Terminal {lastSegment.arrival.terminal}</div>
+          )}
+        </div>
+
+        <div className="col-span-2 divide-y divide-gray-200">
+          <div className="py-1.5">
+            <span className="text-sm font-medium text-gray-500">Passengers: </span>
+            <span className="text-sm">{
+              details?.passengers?.length || 
+              (details?.fareDetails?.[0]?.passengers && 
+                Object.values(details.fareDetails[0].passengers).reduce((a, b) => (a as number) + (b as number), 0)) || 
+              "N/A"
+            }</span>
+          </div>
+          <div className="py-2">
+            <span className="text-sm font-medium text-gray-500">Class: </span>
+            <span className="text-sm">{details?.fareDetails?.[0]?.cabin || "Economy"}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderHotelDetails = (details: any) => (
+    <div className="grid grid-cols-2 gap-4 mt-4">
+      <div className="space-y-1">
+        <div className="text-sm font-medium text-gray-500">Check-in</div>
+        <div className="text-sm">{formatDate(details?.checkIn)}</div>
       </div>
       
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2 text-gray-500">
-          <Calendar className="h-4 w-4" />
-          <span className="text-sm">
-            {new Date(booking.date).toLocaleDateString()}
-          </span>
+      <div className="space-y-1">
+        <div className="text-sm font-medium text-gray-500">Check-out</div>
+        <div className="text-sm">{formatDate(details?.checkOut)}</div>
+      </div>
+
+      <div className="col-span-2 divide-y divide-gray-200">
+        <div className="py-2">
+          <span className="text-sm font-medium text-gray-500">Room: </span>
+          <span className="text-sm">{details?.roomDetails?.name || "Standard Room"}</span>
         </div>
-        <span className="font-medium">
-          ${booking.amount}
-        </span>
-        {renderBookingActions(booking)}
+        <div className="py-2">
+          <span className="text-sm font-medium text-gray-500">Guests: </span>
+          <span className="text-sm">{details?.guests?.length || 1} guests</span>
+        </div>
+        {details?.specialRequests && (
+          <div className="py-2">
+            <span className="text-sm font-medium text-gray-500">Special Requests: </span>
+            <span className="text-sm">{details.specialRequests}</span>
+          </div>
+        )}
       </div>
     </div>
   );
+
+  const renderCarDetails = (details: any) => (
+    <div className="grid grid-cols-2 gap-4 mt-4">
+      <div className="space-y-1">
+        <div className="text-sm font-medium text-gray-500">Pickup</div>
+        <div className="text-sm">{formatDateTime(`${details?.pickupDate}T${details?.pickupTime}`)}</div>
+        <div className="text-sm font-medium">{details?.pickupLocation}</div>
+      </div>
+      
+      <div className="space-y-1">
+        <div className="text-sm font-medium text-gray-500">Drop-off</div>
+        <div className="text-sm">{formatDateTime(`${details?.dropoffDate}T${details?.dropoffTime}`)}</div>
+        <div className="text-sm font-medium">{details?.dropoffLocation}</div>
+      </div>
+
+      <div className="col-span-2 divide-y divide-gray-200">
+        <div className="py-2">
+          <span className="text-sm font-medium text-gray-500">Duration: </span>
+          <span className="text-sm">
+            {differenceInDays(new Date(details?.dropoffDate), new Date(details?.pickupDate))} days
+          </span>
+        </div>
+        <div className="py-2">
+          <span className="text-sm font-medium text-gray-500">Driver: </span>
+          <span className="text-sm">License: {details?.licenseNumber || "Not provided"}</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderBookingDetails = (booking: any) => {
+    switch (booking.bookingType) {
+      case 'flight':
+        return renderFlightDetails(booking.bookingDetails);
+      case 'hotel':
+        return renderHotelDetails(booking.bookingDetails);
+      case 'car':
+        return renderCarDetails(booking.bookingDetails);
+      default:
+        return null;
+    }
+  };
+
+  const renderBookingItem = (booking: any) => (
+    <div
+      key={booking.bookingId}
+      onClick={() => router.push(`/booking/${booking.bookingId}`)}
+      className="flex flex-col p-4 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-gray-100"
+    >
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row justify-between gap-3">
+        <div className="flex flex-col space-y-2">
+          <div className="flex items-center gap-2">
+            {getBookingTypeIcon(booking.bookingType)}
+            <span className="text-lg font-semibold text-gray-900">
+              {booking.bookingId}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
+              {getStatusIcon(booking.status)}
+              {booking.status}
+            </span>
+            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(booking.paymentStatus)}`}>
+              {getStatusIcon(booking.paymentStatus)}
+              {booking.paymentStatus}
+            </span>
+            {booking.paymentStatus === 'paid' && (
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                booking.isRefundable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}>
+                {booking.isRefundable ? 'Refundable' : 'Non-refundable'}
+              </span>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <div className="text-sm text-gray-500">Amount</div>
+            <div className="text-lg font-semibold">${booking.amount.toFixed(2)}</div>
+          </div>
+          {isHigherRole && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEdit(booking);
+              }}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              disabled={updateLoading}
+            >
+              <Pencil className="h-4 w-4 text-gray-500" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Customer Info */}
+      {isHigherRole && (
+        <div className="mt-2 flex items-center gap-2">
+          <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+            {booking.user.profilePicture && <Image
+              src={booking.user.profilePicture}
+              alt="user"
+              width={32}
+              height={32}
+              className="h-8 w-8 rounded-full"
+            />}
+          </div>
+          <div>
+            <div className="font-medium">{booking.user.name}</div>
+            <div className="text-sm text-gray-500">{booking.user.email}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Divider */}
+      <div className="my-2 border-t border-gray-100" />
+
+      {/* Booking Details */}
+      {renderBookingDetails(booking)}
+
+      {/* Footer */}
+      <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4" />
+          <span>Booked on {formatDate(booking.createdAt)}</span>
+        </div>
+        {isHigherRole && (<div>
+          Provider: {booking.provider}
+        </div>)}
+      </div>
+    </div>
+  );
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-lg text-muted-foreground">Loading bookings...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col space-y-6">
@@ -305,7 +368,7 @@ export default function Bookings({ userAsString }: { userAsString: string }) {
         <div className="relative flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
-            placeholder={isHigherRole ? "Search bookings..." : "Search your bookings..."}
+            placeholder={isHigherRole ? "Search by booking ID or email..." : "Search your bookings..."}
             className="pl-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -321,7 +384,7 @@ export default function Bookings({ userAsString }: { userAsString: string }) {
           <SelectContent>
             {FILTER_STATUS.map(status => (
               <SelectItem key={status} value={status}>
-                {status}
+                {status.charAt(0).toUpperCase() + status.slice(1)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -336,7 +399,7 @@ export default function Bookings({ userAsString }: { userAsString: string }) {
           <SelectContent>
             {BOOKING_TYPES.map(type => (
               <SelectItem key={type} value={type}>
-                {type}
+                {type.charAt(0).toUpperCase() + type.slice(1)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -366,10 +429,7 @@ export default function Bookings({ userAsString }: { userAsString: string }) {
             </DialogHeader>
             
             {editingBooking && (
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                handleUpdateBooking(editingBooking);
-              }}>
+              <form onSubmit={handleUpdateBooking}>
                 <div className="grid gap-6 py-4">
                   <div className="grid gap-2">
                     <Label htmlFor="status">Status</Label>
@@ -386,14 +446,14 @@ export default function Bookings({ userAsString }: { userAsString: string }) {
                       <SelectContent>
                         {BOOKING_STATUS.map(status => (
                           <SelectItem key={status} value={status}>
-                            {status}
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {editingBooking.status === "Paid" && (
+                  {editingBooking.paymentStatus === 'paid' && (
                     <div className="flex items-center justify-between">
                       <Label htmlFor="isRefundable">Refundable</Label>
                       <Checkbox 
@@ -409,11 +469,16 @@ export default function Bookings({ userAsString }: { userAsString: string }) {
                 </div>
                 
                 <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isLoading}>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setIsEditDialogOpen(false)} 
+                    disabled={updateLoading}
+                  >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isLoading}>
-                    {isLoading ? (
+                  <Button type="submit" disabled={updateLoading}>
+                    {updateLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Saving...
@@ -427,76 +492,6 @@ export default function Bookings({ userAsString }: { userAsString: string }) {
             )}
           </DialogContent>
         </Dialog>
-      )}
-
-      {/* Cancel Dialog */}
-      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cancel Booking</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to cancel this booking? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setShowCancelDialog(false)} disabled={isLoading}>
-              No, Keep Booking
-            </Button>
-            <Button variant="destructive" onClick={confirmCancel} disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Cancelling...
-                </>
-              ) : (
-                'Yes, Cancel Booking'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Refund Dialog */}
-      <Dialog open={showRefundDialog} onOpenChange={setShowRefundDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Request Refund</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to request a refund for this booking?
-              Our team will review your request and process it according to our refund policy.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setShowRefundDialog(false)} 
-              disabled={isLoading}
-            >
-              No, Keep Booking
-            </Button>
-            <Button onClick={confirmRefund} disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                'Yes, Request Refund'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Loading Overlay */}
-      {isLoading && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-lg shadow-lg flex items-center gap-2">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-            <span>Processing...</span>
-          </div>
-        </div>
       )}
     </div>
   );

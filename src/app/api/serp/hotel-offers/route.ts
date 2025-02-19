@@ -55,6 +55,7 @@
 //             proopertyToken: 'property.property_token',
 //             type: property.type,
 //             name: property.name,
+//             provider: 'serp',
 //             description: property.description,
 //             location: {
 //                 latitude: property.gps_coordinates.latitude,
@@ -179,6 +180,7 @@ export async function POST(req: Request) {
                 propertyToken: "hotel-1",
                 id: "hotel-1",
                 type: "hotel",
+                provider: "serp",
                 name: "The Ritz-Carlton, Bali",
                 description: "Zen-like quarters, some with butler service, in an upscale property offering refined dining & a spa.",
                 location: {
@@ -268,6 +270,7 @@ export async function POST(req: Request) {
                 propertyToken: "hotel-2",
                 id: "hotel-2",
                 type: "resort",
+                provider: "serp",
                 name: "Mulia Resort - Nusa Dua",
                 description: "Upmarket rooms & suites in a premium beachfront getaway with 6 restaurants & 4 pools.",
                 location: {

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "../ui/sidebar";
-import { InfoIcon, Users2Icon, PlaneIcon, Hotel, Car, FileText, HandCoinsIcon, Handshake, MapIcon, BadgeCheck } from "lucide-react";
+import { InfoIcon, Users2Icon, PlaneIcon, Hotel, Car, FileText, HandCoinsIcon, Handshake, MapIcon, BadgeCheck, Cog } from "lucide-react";
 import {
   IconArrowLeft,
   IconBrandTabler,
@@ -23,6 +23,7 @@ import Cars from "./Cars";
 import Hotels from "./Hotels";
 import Deals from "./Deals";
 import Intro from "./Intro";
+import Providers from "./Provider";
 
 const allLinks = [
   {
@@ -30,6 +31,14 @@ const allLinks = [
     id: "info",
     icon: (
       <InfoIcon className="text-neutral-700 h-5 w-5 flex-shrink-0" />
+    ),
+    roles: ["admin"]
+  },
+  {
+    label: "Providers",
+    id: "providers",
+    icon: (
+      <Cog className="text-neutral-700 h-5 w-5 flex-shrink-0" />
     ),
     roles: ["admin"]
   },
@@ -218,6 +227,7 @@ const Content = ({ active, role, user }: { active: string; role: string, user: a
         {active === "dashboard" && <Intro role={role}/>}
         {active === "info" && hasAccess("info") && <Info />}
         {active === "users" && hasAccess("users") && <Users />}
+        {active === "providers" && hasAccess("providers") && <Providers />}
         {active === "bookings" && hasAccess("bookings") && <Bookings userAsString={JSON.stringify(user)}/>}
         {active === "transactions" && hasAccess("transactions") && <Transactions userAsString={JSON.stringify(user)} />}
         {active === "airlines" && hasAccess("airlines") && <Airlines />}

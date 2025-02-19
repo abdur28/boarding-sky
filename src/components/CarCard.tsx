@@ -11,6 +11,8 @@ interface CarCardProps {
   searchParams?: {
     pickupDate: string
     dropoffDate: string
+    pickupTime: string,      
+    dropoffTime: string,     
     pickupLocation: string
     dropoffLocation?: string
   }
@@ -29,6 +31,8 @@ export function CarCard({
       dropoffDate: searchParams?.dropoffDate || '',
       pickupLocation: searchParams?.pickupLocation || '',
       dropoffLocation: searchParams?.dropoffLocation || searchParams?.pickupLocation || '',
+      pickupTime: searchParams?.pickupTime || '10:00',
+      dropoffTime: searchParams?.dropoffTime || '10:00',
     })
 
     router.push(`/car/booking?${params.toString()}`)

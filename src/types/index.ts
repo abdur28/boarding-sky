@@ -91,7 +91,12 @@ export interface FlightOffer {
   id?: string;
   providerId: string;
   source?: 'GDS' | 'NDC' | 'OTHER';
-  
+  travelClass: string;
+  passengers: {
+    adults: number;
+    children: number;
+    infants: number;
+  }
   price: {
     amount: number;
     currency: string;
@@ -180,6 +185,7 @@ export interface HotelOffer {
   id: string;
   type: 'hotel' | 'resort' | 'apartment';
   name: string;
+  provider: string;
   description: string;
   location: HotelLocation;
   
@@ -221,7 +227,7 @@ export interface HotelOffer {
 
 // Helper type for specific provider responses
 export interface SerpApiHotelOffer extends HotelOffer {
-  provider: 'serpapi';
+  provider: 'serp';
   serpapi_property_details_link: string;
 }
 

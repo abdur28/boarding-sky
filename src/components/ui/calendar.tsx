@@ -2,10 +2,13 @@
 
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker } from "react-day-picker"
+import { DayPicker, CaptionProps, useNavigation } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>
 
@@ -15,6 +18,111 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
+
+  function CustomCaption(props: CaptionProps) {
+    const { goToMonth, nextMonth, previousMonth } = useNavigation()
+    const currentYear = props.displayMonth.getFullYear()
+    const currentMonth = props.displayMonth.getMonth()
+
+    const months = [
+      "January", "February", "March", "April", "May", "June", 
+      "July", "August", "September", "October", "November", "December"
+    ]
+    
+    const years = Array.from(
+      { length: 201 }, 
+      (_, i) => currentYear - 100 + i
+    )
+
+    return (
+      <div className="flex gap-1 items-center justify-center px-8">
+        <Button
+          variant="outline"
+          className={cn(
+            "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+            "absolute left-1"
+          )}
+          onClick={() => previousMonth && goToMonth(previousMonth)}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+
+        {/* Month Selection */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              className="text-center text-sm font-medium"
+            >
+              {months[currentMonth]}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-0">
+            <ScrollArea className="h-48">
+              <div className="grid grid-cols-1 gap-1 p-1">
+                {months.map((month, index) => (
+                  <Button
+                    key={month}
+                    variant={currentMonth === index ? "default" : "ghost"}
+                    className="justify-start"
+                    onClick={() => {
+                      const newDate = new Date(currentYear, index)
+                      goToMonth(newDate)
+                    }}
+                  >
+                    {month}
+                  </Button>
+                ))}
+              </div>
+            </ScrollArea>
+          </PopoverContent>
+        </Popover>
+
+        {/* Year Selection */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              className="text-center text-sm font-medium"
+            >
+              {currentYear}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-0">
+            <ScrollArea className="h-48">
+              <div className="grid grid-cols-1 gap-1 p-1">
+                {years.map((year) => (
+                  <Button
+                    key={year}
+                    variant={currentYear === year ? "default" : "ghost"}
+                    className="justify-start"
+                    onClick={() => {
+                      const newDate = new Date(year, currentMonth)
+                      goToMonth(newDate)
+                    }}
+                  >
+                    {year}
+                  </Button>
+                ))}
+              </div>
+            </ScrollArea>
+          </PopoverContent>
+        </Popover>
+
+        <Button
+          variant="outline"
+          className={cn(
+            "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+            "absolute right-1"
+          )}
+          onClick={() => nextMonth && goToMonth(nextMonth)}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    )
+  }
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -54,8 +162,7 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
-        IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+        Caption: CustomCaption
       }}
       {...props}
     />

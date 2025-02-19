@@ -1,13 +1,17 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, CalendarIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { format } from "date-fns"
 
 interface DriverFormProps {
   onFormChange: (isValid: boolean, formData: any) => void
@@ -22,21 +26,43 @@ export function CarBookingForm({ onFormChange }: DriverFormProps) {
     phone: '',
     country: '',
     licenseNumber: '',
-    birthMonth: '',
-    birthDay: '',
-    birthYear: '',
-    licenseExpiry: '',
+    birthDate: undefined as Date | undefined,
+    licenseExpiry: undefined as Date | undefined,
   })
   const [acceptTerms, setAcceptTerms] = useState(false)
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
+  const handleInputChange = (field: string, value: string | Date | undefined) => {
+    const newFormData = {
+      ...formData,
       [field]: value
-    }))
+    }
+    setFormData(newFormData)
+    
+    // Validate and update form after state change
+    const isValid = 
+      newFormData.firstName !== '' &&
+      newFormData.lastName !== '' &&
+      newFormData.email !== '' &&
+      newFormData.phone !== '' &&
+      newFormData.country !== '' &&
+      newFormData.licenseNumber !== '' &&
+      newFormData.birthDate !== undefined &&
+      newFormData.licenseExpiry !== undefined &&
+      acceptTerms
+
+    const apiFormData = {
+      ...newFormData,
+      birthDate: newFormData.birthDate ? format(newFormData.birthDate, 'yyyy-MM-dd') : '',
+      licenseExpiry: newFormData.licenseExpiry ? format(newFormData.licenseExpiry, 'yyyy-MM-dd') : ''
+    }
+
+    onFormChange(isValid, apiFormData)
   }
 
-  useEffect(() => {
+  const handleTermsChange = (checked: boolean) => {
+    setAcceptTerms(checked)
+    
+    // Validate and update form after terms change
     const isValid = 
       formData.firstName !== '' &&
       formData.lastName !== '' &&
@@ -44,14 +70,23 @@ export function CarBookingForm({ onFormChange }: DriverFormProps) {
       formData.phone !== '' &&
       formData.country !== '' &&
       formData.licenseNumber !== '' &&
-      formData.birthMonth !== '' &&
-      formData.birthDay !== '' &&
-      formData.birthYear !== '' &&
-      formData.licenseExpiry !== '' &&
-      acceptTerms
+      formData.birthDate !== undefined &&
+      formData.licenseExpiry !== undefined &&
+      checked
 
-    onFormChange(isValid, formData)
-  }, [formData, acceptTerms, onFormChange])
+    const apiFormData = {
+      ...formData,
+      birthDate: formData.birthDate ? format(formData.birthDate, 'yyyy-MM-dd') : '',
+      licenseExpiry: formData.licenseExpiry ? format(formData.licenseExpiry, 'yyyy-MM-dd') : ''
+    }
+
+    onFormChange(isValid, apiFormData)
+  }
+
+  const formatDate = (date: Date | undefined) => {
+    if (!date) return "Select date"
+    return format(date, 'MMM dd, yyyy')
+  }
 
   return (
     <div className="space-y-6">
@@ -143,57 +178,54 @@ export function CarBookingForm({ onFormChange }: DriverFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Date of birth*</Label>
-              <div className="grid grid-cols-3 gap-2">
-                <Select onValueChange={(value) => handleInputChange('birthMonth', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Month" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({length: 12}, (_, i) => (
-                      <SelectItem key={i + 1} value={String(i + 1)}>
-                        {String(i + 1).padStart(2, '0')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select onValueChange={(value) => handleInputChange('birthDay', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Day" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({length: 31}, (_, i) => (
-                      <SelectItem key={i + 1} value={String(i + 1)}>
-                        {String(i + 1).padStart(2, '0')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select onValueChange={(value) => handleInputChange('birthYear', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({length: 70}, (_, i) => {
-                      const year = new Date().getFullYear() - i - 18
-                      return (
-                        <SelectItem key={year} value={String(year)}>
-                          {year}
-                        </SelectItem>
-                      )
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formatDate(formData.birthDate)}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.birthDate}
+                    onSelect={(date) => handleInputChange('birthDate', date)}
+                    defaultMonth={formData.birthDate || new Date(new Date().setFullYear(new Date().getFullYear() - 18))}
+                    initialFocus
+                    disabled={(date) => 
+                      date > new Date() || 
+                      date > new Date(new Date().setFullYear(new Date().getFullYear() - 18))
+                    }
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label>License Expiry Date*</Label>
-              <Input 
-                type="date" 
-                value={formData.licenseExpiry}
-                onChange={(e) => handleInputChange('licenseExpiry', e.target.value)}
-                min={new Date().toISOString().split('T')[0]} 
-                required 
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formatDate(formData.licenseExpiry)}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.licenseExpiry}
+                    onSelect={(date) => handleInputChange('licenseExpiry', date)}
+                    defaultMonth={formData.licenseExpiry}
+                    initialFocus
+                    disabled={(date) => date < new Date()}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </CardContent>
@@ -223,7 +255,7 @@ export function CarBookingForm({ onFormChange }: DriverFormProps) {
             <Checkbox 
               id="terms" 
               checked={acceptTerms} 
-              onCheckedChange={(checked) => setAcceptTerms(checked as boolean)} 
+              onCheckedChange={(checked) => handleTermsChange(checked as boolean)} 
             />
             <Label htmlFor="terms" className="text-sm">
               I confirm that I am at least 21 years old and have held my license for at least one year. 
