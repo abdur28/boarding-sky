@@ -13,11 +13,16 @@ type DashboardState = {
     blogs: Array<any>;
     hotelOffers: Array<any>;
     tours: Array<any>;
-    cars: Array<any>;
-    airlines: Array<any>;
+    carOffers: Array<any>;
     flightOffers: Array<any>;
     flightDeals: Array<any>;
     destinations: Array<any>;
+    privacyPolicy: string;
+    termsAndConditions: string;
+    fetchPrivacyPolicy: () => Promise<void>;
+    fetchTermsAndConditions: () => Promise<void>;
+    updatePrivacyPolicy: (content: string) => Promise<void>;
+    updateTermsAndConditions: (content: string) => Promise<void>;
     deleteImages(urls: string[]): Promise<void>;
     getInfo(): Promise<void>;
     getUsers(): Promise<void>;
@@ -27,9 +32,8 @@ type DashboardState = {
     getBlogs(): Promise<void>;
     getHotelOffers(): Promise<void>;
     getTours(): Promise<void>;
-    getCars(): Promise<void>;
+    getCarOffers(): Promise<void>;
     getFlightOffers(): Promise<void>;
-    getAirlines(): Promise<void>;
     getFlightDeals(): Promise<void>;
     getDestinations(): Promise<void>;
 };
@@ -43,11 +47,12 @@ export const useDashboard = create<DashboardState>((set, get) => ({
     blogs: [],
     hotelOffers: [],
     tours: [],
-    cars: [],
-    airlines: [],
+    carOffers: [],
     flightOffers: [],
     flightDeals: [],
     destinations: [],
+    privacyPolicy: '',
+    termsAndConditions: '',
     deleteImages: async (urls: string[]) => {
 
         if (urls.length === 0) {
@@ -229,10 +234,10 @@ export const useDashboard = create<DashboardState>((set, get) => ({
             set({ isLoading: false });
         }
     },
-    getCars: async () => {
+    getCarOffers: async () => {
         set({ isLoading: true });
         try {
-            const response = await fetch("/api/actions/get-cars", {
+            const response = await fetch("/api/actions/get-car-offers", {
                 cache: "no-store",
                 method: "POST",
                 headers: {
@@ -240,31 +245,14 @@ export const useDashboard = create<DashboardState>((set, get) => ({
                 },
             });
             const data = await response.json();
-            set({ isLoading: false, cars: data.data });
+            set({ isLoading: false, carOffers: data.data });
             return data;
         } catch (err) {
             console.error("Failed to get info:", err);
             set({ isLoading: false });
         }
     },
-    getAirlines: async () => {
-        set({ isLoading: true });
-        try {
-            const response = await fetch("/api/actions/get-airlines", {
-                cache: "no-store",
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-            const data = await response.json();
-            set({ isLoading: false, airlines: data.data });
-            return data;
-        } catch (err) {
-            console.error("Failed to get info:", err);
-            set({ isLoading: false });
-        }
-    },
+
     getDestinations: async () => {
         set({ isLoading: true });
         try {
@@ -321,4 +309,85 @@ export const useDashboard = create<DashboardState>((set, get) => ({
             set({ isLoading: false });
         }
     },
+    // Fetch Privacy Policy
+  fetchPrivacyPolicy: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await fetch("/api/actions/get-privacy-policy");
+      const data = await response.json();
+      if (data.success) {
+        set({ privacyPolicy: data.content });
+      } else {
+        throw new Error(data.error || "Failed to fetch privacy policy");
+      }
+    } catch (err) {
+        console.error("Failed to get info:", err);
+        set({ isLoading: false });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Fetch Terms & Conditions
+  fetchTermsAndConditions: async () => {
+    set({ isLoading: true});
+    try {
+      const response = await fetch("/api/actions/get-terms-and-conditions");
+      const data = await response.json();
+      if (data.success) {
+        set({ termsAndConditions: data.content });
+      } else {
+        throw new Error(data.error || "Failed to fetch terms and conditions");
+      }
+    } catch (err) {
+        console.error("Failed to get info:", err);
+        set({ isLoading: false });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Update Privacy Policy
+  updatePrivacyPolicy: async (content: string) => {
+    set({ isLoading: true });
+    try {
+      const response = await fetch("/api/actions/update-privacy-policy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || "Failed to update privacy policy");
+      }
+      set({ privacyPolicy: content });
+    } catch (err) {
+        console.error("Failed to get info:", err);
+        set({ isLoading: false });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Update Terms & Conditions
+  updateTermsAndConditions: async (content: string) => {
+    set({ isLoading: true });
+    try {
+      const response = await fetch("/api/actions/update-terms-and-conditions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || "Failed to update terms and conditions");
+      }
+      set({ termsAndConditions: content });
+    } catch (err) {
+        console.error("Failed to get info:", err);
+        set({ isLoading: false });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
 }))

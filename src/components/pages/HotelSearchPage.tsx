@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { HotelCard } from "../HotelCard"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent } from "../ui/card"
-import { useHotel } from "@/hooks/useHotel"
+import { HotelSearchParams, useHotel } from "@/hooks/useHotel"
 import { HotelOffer } from "@/types"
 
 interface HotelSearchPageProps {
@@ -43,7 +43,7 @@ const HotelSearchPage = ({
 }: HotelSearchPageProps) => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { searchHotelOffers, hotelOffers, filteredHotels, isLoading, error } = useHotel();
+    const { searchHotelOffers, hotelOffers, filteredHotels, applyFilters, isLoading, error } = useHotel();
     const [totalPages, setTotalPages] = useState(1);
 
     const updatePageParam = (newPage: number) => {
@@ -60,22 +60,33 @@ const HotelSearchPage = ({
                 checkOut,
                 adults,
                 rooms,
-                priceRange,
-                amenities,
-                ratings,
-                boardType,
-                paymentPolicy,
-                providerIds: ['serp']
+                providers: ['serp', 'direct'],
             });
         };
         fetchHotels();
-    }, [city, checkIn, checkOut, adults, rooms, amenities, ratings, priceRange, boardType, paymentPolicy]);
-
+    }, [city, checkIn, checkOut, adults, rooms]); // Remove filter dependencies
+    
+    // Add a new useEffect to handle filtering
     useEffect(() => {
-        if (filteredHotels?.length) {
-            setTotalPages(Math.ceil(filteredHotels.length / 3));
+        if (hotelOffers.length > 0) {
+            const appliedFilters: Partial<HotelSearchParams> = {};
+            
+            if (amenities?.length) {
+                appliedFilters.amenities = amenities;
+            }
+            if (ratings?.length) {
+                appliedFilters.ratings = ratings;
+            }
+            if (priceRange) {
+                appliedFilters.priceRange = priceRange;
+            }
+            if (paymentPolicy) {
+                appliedFilters.paymentPolicy = paymentPolicy;
+            }
+    
+            applyFilters(appliedFilters);
         }
-    }, [filteredHotels]);
+    }, [amenities, ratings, priceRange, boardType, paymentPolicy, hotelOffers]);
 
 
     const Pagination = () => {

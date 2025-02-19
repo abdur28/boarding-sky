@@ -10,6 +10,7 @@ import { CarOffer } from "@/types"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { useRouter } from "next/navigation"
 import { CarBookingForm } from "@/components/forms/CarBookingForm"
+import { useCar } from "@/hooks/useCar"
 
 interface CarBookingPageProps {
     offerId: string
@@ -19,6 +20,7 @@ interface CarBookingPageProps {
     dropoffTime: string
     pickupLocation: string
     dropoffLocation: string
+    provider: string
 }
 
 const CarBookingPage = ({
@@ -28,14 +30,15 @@ const CarBookingPage = ({
     pickupLocation,
     dropoffLocation,
     pickupTime,
-    dropoffTime
+    dropoffTime,
+    provider
 }: CarBookingPageProps) => {
     const router = useRouter()
-    const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-    const [carOffer, setCarOffer] = useState<CarOffer | null>(null)
+    const { carOffer, isLoading: stateLoading, error: stateError, getCarOffer } = useCar()
     const [isFormValid, setIsFormValid] = useState(false)
     const [formData, setFormData] = useState<any>(null)
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     const formatDateTime = (date: string, time: string) => {
         const formattedDate = new Date(date).toLocaleDateString('en-US', {
@@ -48,48 +51,19 @@ const CarBookingPage = ({
     };
 
     useEffect(() => {
-        const fetchCarOffer = async () => {
-            try {
-                setIsLoading(true)
-                setError(null)
-
-                const response = await fetch('/api/skyscanner/car-offer', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        offerId,
-                        pickUpLocation: pickupLocation,
-                        dropOffLocation: dropoffLocation,
-                        pickUpDate: pickupDate,
-                        dropOffDate: dropoffDate,
-                        pickUpTime: pickupTime,
-                        dropOffTime: dropoffTime
-                    }),
-                })
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch car offer')
-                }
-
-                const data = await response.json()
-                if (!data.success) {
-                    throw new Error(data.error || 'Failed to fetch car offer')
-                }
-
-                setCarOffer(data.offer)
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'An error occurred')
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
         if (offerId) {
-            fetchCarOffer()
+            getCarOffer({
+                offerId,
+                pickUpLocation: pickupLocation,
+                dropOffLocation: dropoffLocation,
+                pickUpDate: pickupDate,
+                dropOffDate: dropoffDate,
+                pickUpTime: pickupTime,
+                dropOffTime: dropoffTime,
+                provider
+            })
         }
-    }, [offerId, pickupLocation, dropoffLocation, pickupDate, dropoffDate, pickupTime, dropoffTime])
+    }, [offerId, pickupLocation, dropoffLocation, pickupDate, dropoffDate, pickupTime, dropoffTime, provider])
 
 
     
@@ -155,8 +129,8 @@ const CarBookingPage = ({
         }
     };
 
-    if (isLoading) return <LoadingState />
-    if (error) return <ErrorState message={error} />
+    if (isLoading || stateLoading) return <LoadingState />
+    if (error || stateError) return <ErrorState message={error || 'Failed to fetch car offer'} />
     if (!carOffer) return <NoDataState />
 
     return (

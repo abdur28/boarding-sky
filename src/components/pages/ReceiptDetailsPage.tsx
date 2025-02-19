@@ -9,13 +9,15 @@ import {
     CalendarDays, 
     CreditCard, 
     Shield, 
-    Download, 
     Building, 
     Mail, 
     Phone, 
     User,
     Receipt,
-    ArrowLeft
+    ArrowLeft,
+    Map,
+    Users,
+    MapPin
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -27,6 +29,22 @@ const statusColors = {
 };
 
 type Status = keyof typeof statusColors;
+type BookingType = 'flight' | 'hotel' | 'car' | 'tour';
+
+const getBookingTypeIcon = (type: BookingType) => {
+    switch (type) {
+        case 'tour':
+            return <Map className="h-4 w-4 text-gray-500" />;
+        case 'car':
+            return <CreditCard className="h-4 w-4 text-gray-500" />;
+        case 'hotel':
+            return <Building className="h-4 w-4 text-gray-500" />;
+        case 'flight':
+            return <Users className="h-4 w-4 text-gray-500" />;
+        default:
+            return null;
+    }
+};
 
 const ReceiptDetailsPage = ({ id }: { id: string }) => {
     const [receipt, setReceipt] = useState<any>(null);
@@ -99,6 +117,49 @@ const ReceiptDetailsPage = ({ id }: { id: string }) => {
         return format(parseISO(date), 'MMM dd, yyyy HH:mm');
     };
 
+    const renderPriceBreakdown = () => {
+        switch (receipt.bookingType) {
+            case 'tour':
+                return (
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-600">Tour Package</span>
+                            <span className="text-sm">${receipt.itemDetails.unitPrice.toFixed(2)}</span>
+                        </div>
+                        {receipt.itemDetails.breakdown && (
+                            <>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-gray-600">
+                                        Adults ({receipt.itemDetails.breakdown.adults})
+                                    </span>
+                                    <span className="text-sm">
+                                        ${receipt.itemDetails.breakdown.adultPrice.toFixed(2)}
+                                    </span>
+                                </div>
+                                {receipt.itemDetails.breakdown.children > 0 && (
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-gray-600">
+                                            Children ({receipt.itemDetails.breakdown.children})
+                                        </span>
+                                        <span className="text-sm">
+                                            ${receipt.itemDetails.breakdown.childPrice.toFixed(2)}
+                                        </span>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                );
+            default:
+                return (
+                    <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">{receipt.itemDetails.name}</span>
+                        <span className="text-sm">${receipt.itemDetails.unitPrice.toFixed(2)}</span>
+                    </div>
+                );
+        }
+    };
+
     return (
         <div className="container max-w-4xl mx-auto px-4">
             {/* Receipt Header */}
@@ -143,6 +204,10 @@ const ReceiptDetailsPage = ({ id }: { id: string }) => {
                                 <div className="text-sm font-medium text-gray-500">Transaction ID</div>
                                 <div className="text-sm mt-1">{receipt.paymentDetails.transactionId}</div>
                             </div>
+                            <div>
+                                <div className="text-sm font-medium text-gray-500">Booking Type</div>
+                                <div className="text-sm mt-1 capitalize">{receipt.bookingType}</div>
+                            </div>
                         </div>
                     </div>
                 </Card>
@@ -151,10 +216,7 @@ const ReceiptDetailsPage = ({ id }: { id: string }) => {
                 <Card className="p-6">
                     <h3 className="text-lg font-semibold mb-4">Price Details</h3>
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">{receipt.itemDetails.name}</span>
-                            <span className="text-sm">${receipt.itemDetails.unitPrice.toFixed(2)}</span>
-                        </div>
+                        {renderPriceBreakdown()}
                         
                         {receipt.itemDetails.protection?.included && (
                             <div className="flex justify-between items-center">

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Tour {
   _id: string;
@@ -56,6 +57,7 @@ export default function SingleTourPage({ tourAsString }: { tourAsString: string 
   const tour: Tour = JSON.parse(tourAsString);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const router = useRouter();
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % tour.images.length);
@@ -64,25 +66,10 @@ export default function SingleTourPage({ tourAsString }: { tourAsString: string 
   const prevImage = () => {
     setCurrentImageIndex((prev) => (prev - 1 + tour.images.length) % tour.images.length);
   };
-
-  // Mock data for demo
-  const mockHighlights = [
-    "Visit UNESCO World Heritage sites",
-    "Experience local culture and traditions",
-    "Taste authentic local cuisine",
-    "Scenic mountain views",
-    "Professional photography opportunities"
-  ];
-
-  const mockItinerary = [
-    {
-      day: 1,
-      title: "Arrival & Welcome Dinner",
-      description: "Arrive at your destination and meet your tour guide. Evening welcome dinner with the group.",
-      activities: ["Airport transfer", "Hotel check-in", "Welcome dinner"]
-    },
-    // Add more days...
-  ];
+  
+  const handleBookNow = () => {
+    router.push(`/tour/booking/${tour._id}`);
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-5 py-8">
@@ -91,6 +78,7 @@ export default function SingleTourPage({ tourAsString }: { tourAsString: string 
         <Button
           variant="ghost"
           className="mb-6"
+          onClick={() => router.back()}
         >
           <ChevronLeft className="mr-2 h-4 w-4" />
           Back to Tours
@@ -215,7 +203,7 @@ export default function SingleTourPage({ tourAsString }: { tourAsString: string 
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4">Tour Highlights</h2>
               <div className="grid sm:grid-cols-2 gap-4">
-                {(tour.highlights || mockHighlights).map((highlight, index) => (
+                {(tour.highlights).map((highlight, index) => (
                   <div key={index} className="flex items-start gap-2">
                     <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                       <Camera className="h-4 w-4 text-blue-600" />
@@ -230,7 +218,7 @@ export default function SingleTourPage({ tourAsString }: { tourAsString: string 
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4">Tour Itinerary</h2>
               <div className="space-y-6">
-                {(tour.itinerary || mockItinerary).map((day, index) => (
+                {(tour.itinerary).map((day, index) => (
                   <div key={index} className="border-l-2 border-blue-200 pl-4 pb-6">
                     <h3 className="font-semibold text-lg">
                       Day {day.day}: {day.title}
@@ -263,7 +251,7 @@ export default function SingleTourPage({ tourAsString }: { tourAsString: string 
                 </div>
                 <Badge variant="secondary">Per person</Badge>
               </div>
-              <Button className="w-full" size="lg">
+              <Button onClick={handleBookNow} className="w-full" size="lg">
                 Book Now
               </Button>
             </Card>

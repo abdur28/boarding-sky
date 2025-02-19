@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import mongoose from "mongoose";
 
-type BookingType = 'car' | 'flight' | 'hotel';
+type BookingType = 'car' | 'flight' | 'hotel' | 'tour';
 type BookingStatus = 'confirmed' | 'pending' | 'cancelled' | 'completed';
 
 interface CustomerDetails {
@@ -128,6 +128,19 @@ function reconstructFlightDetails(metadata: Record<string, any>) {
     };
 }
 
+function reconstructTourDetails(metadata: Record<string, any>) {
+    const tourData = JSON.parse(metadata.tour || '{}');
+    return {
+        tourId: tourData.tourId,
+        destination: tourData.destination,
+        days: tourData.days,
+        departure: tourData.departure,
+        totalParticipants: tourData.totalParticipants,
+        adults: tourData.adults,
+        children: tourData.children
+    };
+}
+
 function getBookingDescription(session: any, bookingType: BookingType): string {
     switch (bookingType) {
         case 'flight':
@@ -139,6 +152,9 @@ function getBookingDescription(session: any, bookingType: BookingType): string {
         case 'car':
             const carDetails = JSON.parse(session.metadata?.car || '{}');
             return `${carDetails.pickupDate} to ${carDetails.dropoffDate}`;
+        case 'tour':
+            const tourDetails = JSON.parse(session.metadata?.tour || '{}');
+            return `${tourDetails.destination} - ${tourDetails.days} days, Departure: ${tourDetails.departure}`;
         default:
             return 'Booking';
     }
@@ -250,7 +266,8 @@ export async function POST(req: Request) {
                             const prefix = {
                                 car: 'CR',
                                 flight: 'FL',
-                                hotel: 'HT'
+                                hotel: 'HT',
+                                tour: 'TR'
                             }[bookingType];
                             const bookingId = `${prefix}-${randomUUID().split('-')[0].toUpperCase()}`;
 
@@ -288,6 +305,11 @@ export async function POST(req: Request) {
                                 case 'car':
                                     bookingDetails = JSON.parse(session.metadata.car || '{}');
                                     break;
+                                case 'tour':
+                                    bookingDetails = reconstructTourDetails(session.metadata);
+                                    break;
+                                default:
+                                    throw new Error('Invalid booking type');
                             }
 
                             const bookingData = {

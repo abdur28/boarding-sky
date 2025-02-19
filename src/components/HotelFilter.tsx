@@ -112,49 +112,35 @@ export function HotelFilter({ loading = false }: { loading?: boolean }) {
 
 
 
-  const updateURLParams = (newFilters: FilterState) => {
-    const params = new URLSearchParams(searchParams.toString())
 
-    // Handle price range
-    if (newFilters.priceRange) {
-      params.set('priceRange', newFilters.priceRange)
-    } else {
-      params.delete('priceRange')
-    }
+const updateURLParams = (newFilters: FilterState) => {
+  const params = new URLSearchParams(searchParams.toString());
 
-    // Handle amenities
-    if (newFilters.amenities.length > 0) {
-      params.set('amenities', newFilters.amenities.join(','))
-    } else {
-      params.delete('amenities')
-    }
+  // Keep the existing search parameters
+  const keepParams = ['city', 'checkIn', 'checkOut', 'adults', 'rooms'];
+  keepParams.forEach(param => {
+      const value = searchParams.get(param);
+      if (value) params.set(param, value);
+  });
 
-    // Handle ratings
-    if (newFilters.ratings.length > 0) {
-      params.set('ratings', newFilters.ratings.join(','))
-    } else {
-      params.delete('ratings')
-    }
+  // Update filter parameters
+  Object.entries(newFilters).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+          if (value.length > 0) {
+              params.set(key, value.join(','));
+          } else {
+              params.delete(key);
+          }
+      } else if (value) {
+          params.set(key, value);
+      } else {
+          params.delete(key);
+      }
+  });
 
-    // Handle board type
-    if (newFilters.boardType) {
-      params.set('boardType', newFilters.boardType)
-    } else {
-      params.delete('boardType')
-    }
-
-    // Handle payment policy
-    if (newFilters.paymentPolicy) {
-      params.set('paymentPolicy', newFilters.paymentPolicy)
-    } else {
-      params.delete('paymentPolicy')
-    }
-
-    // Reset to page 1
-    params.set('page', '1')
-
-    router.push(`/hotel/search?${params.toString()}`)
-  }
+  params.set('page', '1');
+  router.push(`/hotel/search?${params.toString()}`);
+};
 
   const handlePriceChange = (type: 'min' | 'max', value: string) => {
     const numericValue = value.replace(/[^0-9]/g, '')
@@ -307,25 +293,6 @@ export function HotelFilter({ loading = false }: { loading?: boolean }) {
           ))}
           <p className="text-xs text-muted-foreground mt-2">Select up to 4 ratings</p>
         </div>
-      ),
-    },
-    {
-      id: 'boardType',
-      title: 'Board Type',
-      content: (
-        <RadioGroup value={filters.boardType} className="space-y-2">
-          {Object.entries(BOARD_TYPES).map(([key, name]) => (
-            <div key={key} className="flex items-center space-x-2">
-              <RadioGroupItem 
-                value={key}
-                id={`board-${key}`}
-                onClick={() => handleRadioFilter('boardType', key)}
-                disabled={loading}
-              />
-              <Label htmlFor={`board-${key}`}>{name}</Label>
-            </div>
-          ))}
-        </RadioGroup>
       ),
     },
     {

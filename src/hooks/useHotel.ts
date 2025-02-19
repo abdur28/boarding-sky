@@ -1,25 +1,8 @@
-import { HotelOffer, ProviderTokens, SearchHotelOffersParams } from "@/types";
+import { HotelOffer } from "@/types";
 import { create } from "zustand";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-// Add provider configuration type
-interface ProviderConfig {
-  requiresAuth: boolean;
-  baseUrl?: string;
-}
-
-const PROVIDER_CONFIG: Record<string, ProviderConfig> = {
-  'serp': {
-    requiresAuth: false
-  },
-  'amadeus': {
-    requiresAuth: true,
-    baseUrl: '/api/amadeus'
-  }
-  // Add other providers as needed
-};
 
 export interface HotelSearchParams {
   city: string;
@@ -32,152 +15,108 @@ export interface HotelSearchParams {
     min?: number;
     max?: number;
   };
-  amenities?: string[];
   ratings?: string[];
-  boardType?: string;
   paymentPolicy?: string;
+  amenities?: string[];
   hotelClass?: number[];
-  providerIds?: string[];
+  provider?: string;
+  providers?: string[];
 }
 
 interface HotelState {
   hotelOffers: HotelOffer[];
   filteredHotels: HotelOffer[];
-  tokens: ProviderTokens;
   isLoading: boolean;
   error: string | null;
+  hotelOffer: HotelOffer | null;
 
-  getProviderToken: (providerId: string) => Promise<string | null>;
   searchHotelOffers: (params: HotelSearchParams) => Promise<void>;
+  searchHotelOffer: (propertyId: string, params: Partial<HotelSearchParams>) => Promise<any>;
+  getHotelOffer: (params: Partial<HotelSearchParams>) => Promise<any>;
+  applyFilters: (filters: Partial<HotelSearchParams>) => void;
   setFilteredHotels: (hotels: HotelOffer[]) => void;
 }
 
 export const useHotel = create<HotelState>((set, get) => ({
   hotelOffers: [],
+  hotelOffer: null,
   filteredHotels: [],
-  tokens: {},
   isLoading: false,
   error: null,
-
-  getProviderToken: async (providerId: string) => {
-    const providerConfig = PROVIDER_CONFIG[providerId];
-    
-    // If provider doesn't require auth, return null
-    if (!providerConfig?.requiresAuth) {
-      return null;
-    }
-
-    set({ isLoading: true, error: null });
-    const tokens = get().tokens;
-    const currentToken = tokens[providerId];
-
-    // Check if token exists and is not expired (with 5-minute buffer)
-    if (currentToken && Date.now() < currentToken.expiresAt - 300000) {
-      return currentToken.token;
-    }
-
-    // Token doesn't exist or is expired, get a new one
-    try {
-      const response = await fetch(`/api/${providerId}/auth`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: JSON.stringify({}),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch token for ${providerId}. Status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      if (!data.data?.access_token) {
-        throw new Error(`Invalid token response from ${providerId}`);
-      }
-
-      const newToken = {
-        token: data.data.access_token,
-        expiresAt: Date.now() + data.data.expires_in * 1000,
-      };
-
-      set(state => ({
-        tokens: {
-          ...state.tokens,
-          [providerId]: newToken,
-        },
-        isLoading: false,
-      }));
-
-      return newToken.token;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : `Failed to get token for ${providerId}`;
-      set({
-        error: errorMessage,
-        isLoading: false,
-      });
-      throw error;
-    }
-  },
 
   searchHotelOffers: async (params: HotelSearchParams) => {
     set({ isLoading: true, error: null });
 
     try {
-      const { getProviderToken } = get();
+      const providers = params.providers;
 
-      if (!params.providerIds || params.providerIds.length === 0) {
-        throw new Error('No providers selected');
+      if (!providers || providers.length === 0) {
+        throw new Error('No Provider to fetch Data');
       }
 
-      // Handle providers based on their authentication requirements
-      const providerRequests = params.providerIds.map(async (providerId) => {
+      const offers: HotelOffer[] = [];
+
+      for (const provider of providers) {
         try {
-          const providerConfig = PROVIDER_CONFIG[providerId];
-          if (!providerConfig) {
-            throw new Error(`Unknown provider: ${providerId}`);
+          let response;
+          if (provider === 'direct') {
+            response = await fetch('/api/actions/get-hotel-offers', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                city: params.city,
+                checkIn: params.checkIn,
+                checkOut: params.checkOut,
+                adults: params.adults,
+                children: params.children,
+                rooms: params.rooms,
+                priceRange: params.priceRange,
+                amenities: params.amenities,
+                hotelClass: params.hotelClass,
+              }),
+            });
+          } else {
+            response = await fetch(`/api/${provider}/hotel-offers`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(params),
+            });
           }
-
-          let token = null;
-          if (providerConfig.requiresAuth) {
-            token = await getProviderToken(providerId);
-            set({ isLoading: true, error: null });
-            if (!token) {
-              throw new Error(`Failed to get token for ${providerId}`);
-            }
-          }
-
-          const response = await fetch(`/api/${providerId}/hotel-offers`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(token ? { ...params, token } : params),
-          });
 
           if (!response.ok) {
-            throw new Error(`Failed to fetch hotels from ${providerId}`);
+            throw new Error(`Failed to fetch hotel offers from ${provider}`);
           }
 
           const data = await response.json();
-          return data.data || [];
+
+          if (!data.data) {
+            throw new Error(data.error || `Failed to fetch hotel offers from ${provider}`);
+          }
+
+          // Add provider information to each offer
+          const providerOffers = data.data.map((offer: HotelOffer) => ({
+            ...offer,
+            provider
+          }));
+
+          offers.push(...providerOffers);
         } catch (error) {
-          console.error(`Error fetching from ${providerId}:`, error);
-          return [];
+          console.error(`Error fetching from ${provider}:`, error);
+          continue;
         }
-      });
+      }
 
-      // Wait for all provider requests to complete
-      const responses = await Promise.all(providerRequests);
-      const allHotels = responses.flat();
-
-      if (allHotels.length === 0) {
-        throw new Error('No hotels found from any provider');
+      if (offers.length === 0) {
+        throw new Error('No hotel offers found from any provider');
       }
 
       // Sort hotels by price
-      const sortedHotels = allHotels.sort((a, b) => 
-        (typeof a.price === 'number' ? a.price : a.price.current) -
-        (typeof b.price === 'number' ? b.price : b.price.current)
+      const sortedHotels = offers.sort((a, b) => 
+        a.price.current - b.price.current
       );
 
       set({
@@ -187,7 +126,7 @@ export const useHotel = create<HotelState>((set, get) => ({
       });
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch hotels';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch hotel offers';
       set({
         error: errorMessage,
         isLoading: false,
@@ -197,53 +136,128 @@ export const useHotel = create<HotelState>((set, get) => ({
     }
   },
 
+  getHotelOffer: async (params: Partial<HotelSearchParams>) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch('/api/actions/get-hotel-offer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      });
+      
+      const data = await response.json();
+      if (data.data) {
+        set({ isLoading: false, hotelOffer: data.data });
+        return data.data;
+      } else {
+        set({ isLoading: false, hotelOffer: null });
+        throw new Error(data.error || 'Failed to fetch hotel offer');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch hotel offer';
+      set({
+        error: errorMessage,
+        isLoading: false,
+        hotelOffer: null
+      });
+      throw error;
+    }
+  },
 
-    searchHotelOffer: async (propertyId: string, params: SearchHotelOffersParams) => {
-        set({ isLoading: true, error: null });
+  searchHotelOffer: async (propertyId: string, params: Partial<HotelSearchParams>) => {
+    set({ isLoading: true, error: null });
 
-        try {
-            const response = await fetch(`/api/serp/hotel-offers`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    propertyId,
-                    ...params
-                }),
-            });
+    try {
+      const response = await fetch('/api/actions/get-hotel-offer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          propertyId,
+          ...params
+        }),
+      });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch hotel offer');
-            }
+      if (!response.ok) {
+        throw new Error('Failed to fetch hotel offer');
+      }
 
-            const data = await response.json();
-            
-            if (!data.success || !data.data?.[0]) {
-                throw new Error('No hotel data found');
-            }
+      const data = await response.json();
+      
+      if (!data.data) {
+        throw new Error('No hotel data found');
+      }
 
-            const hotelOffer = data.data[0];
+      set({
+        hotelOffers: [data.data],
+        filteredHotels: [data.data],
+        isLoading: false,
+      });
 
-            set({
-                hotelOffers: [hotelOffer],
-                filteredHotels: [hotelOffer],
-                isLoading: false,
-            });
+      return data.data;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch hotel offer';
+      set({
+        error: errorMessage,
+        isLoading: false,
+        hotelOffers: [],
+        filteredHotels: [],
+      });
+      throw error;
+    }
+  },
 
-            return hotelOffer;
+  applyFilters: (filters: Partial<HotelSearchParams>) => {
+    const { hotelOffers } = get();
+    let filtered = [...hotelOffers];
 
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Failed to fetch hotel offer';
-            set({
-                error: errorMessage,
-                isLoading: false,
-                hotelOffers: [],
-                filteredHotels: [],
-            });
-            throw error;
+    // Price range filter
+    if (filters.priceRange) {
+      const min = filters.priceRange.min || 0;
+      const max = filters.priceRange.max || Infinity;
+      filtered = filtered.filter(hotel => {
+        const price = hotel.price.current;
+        return price >= min && price <= max;
+      });
+    }
+
+    // Amenities filter
+    if (filters.amenities?.length) {
+      filtered = filtered.filter(hotel => 
+        filters.amenities?.every(amenity => 
+          hotel.amenities.includes(amenity)
+        )
+      );
+    }
+
+    // Star rating filter
+    if (filters.ratings?.length ) {
+      filtered = filtered.filter(hotel => 
+        filters.ratings?.includes(hotel.hotelClass!.toString())
+      );
+    }
+
+    // Payment policy filter
+    if (filters.paymentPolicy) {
+      filtered = filtered.filter(hotel => {
+        switch (filters.paymentPolicy) {
+          case 'GUARANTEE':
+            return hotel.paymentOptions?.prePayment;
+          case 'DEPOSIT':
+            return hotel.paymentOptions?.depositRequired;
+          case 'NONE':
+            return hotel.paymentOptions?.payAtProperty;
+          default:
+            return true;
         }
-    },
+      });
+    }
+
+    set({ filteredHotels: filtered });
+},
 
   setFilteredHotels: (hotels) => set({ filteredHotels: hotels }),
 }));

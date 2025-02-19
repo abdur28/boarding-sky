@@ -62,6 +62,7 @@ const CarSearchPage = ({
                 dropOffDate,
                 pickUpTime,   
                 dropOffTime, 
+                providers: ['direct', 'skyscanner']
             }
 
             await searchCarOffers(params)

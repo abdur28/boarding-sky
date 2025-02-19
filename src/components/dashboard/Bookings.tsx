@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Calendar, Pencil, Loader2, Check, Clock, Ban, Plane, Building2, Car } from "lucide-react";
+import { Search, Calendar, Pencil, Loader2, Check, Clock, Ban, Plane, Building2, Car, Map } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -28,7 +28,7 @@ import Image from 'next/image';
 
 const BOOKING_STATUS = ["confirmed", "pending", "cancelled", "completed"];
 const FILTER_STATUS = ["All", ...BOOKING_STATUS];
-const BOOKING_TYPES = ["All", "flight", "hotel", "car"];
+const BOOKING_TYPES = ["All", "flight", "hotel", "car", "tour"];
 
 export default function Bookings({ userAsString }: { userAsString: string }) {
   const router = useRouter();
@@ -129,6 +129,8 @@ export default function Bookings({ userAsString }: { userAsString: string }) {
         return <Building2 className="h-4 w-4" />;
       case "car":
         return <Car className="h-4 w-4" />;
+      case "tour":
+        return <Map className="h-4 w-4" />;
       default:
         return null;
     }
@@ -247,6 +249,38 @@ export default function Bookings({ userAsString }: { userAsString: string }) {
     </div>
   );
 
+  const renderTourDetails = (details: any) => (
+    <div className="grid grid-cols-2 gap-4 mt-4">
+      <div className="space-y-1">
+        <div className="text-sm font-medium text-gray-500">Destination</div>
+        <div className="text-sm">{details?.destination}</div>
+      </div>
+      
+      <div className="space-y-1">
+        <div className="text-sm font-medium text-gray-500">Duration</div>
+        <div className="text-sm">{details?.days} days</div>
+      </div>
+  
+      <div className="col-span-2 divide-y divide-gray-200">
+        <div className="py-2">
+          <span className="text-sm font-medium text-gray-500">Departure: </span>
+          <span className="text-sm">{details?.departure}</span>
+        </div>
+        <div className="py-2">
+          <span className="text-sm font-medium text-gray-500">Participants: </span>
+          <span className="text-sm">
+            {details?.adults} Adults
+            {details?.children > 0 && `, ${details?.children} Children`}
+          </span>
+        </div>
+        <div className="py-2">
+          <span className="text-sm font-medium text-gray-500">Total Participants: </span>
+          <span className="text-sm">{details?.totalParticipants}</span>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderBookingDetails = (booking: any) => {
     switch (booking.bookingType) {
       case 'flight':
@@ -255,6 +289,8 @@ export default function Bookings({ userAsString }: { userAsString: string }) {
         return renderHotelDetails(booking.bookingDetails);
       case 'car':
         return renderCarDetails(booking.bookingDetails);
+      case 'tour':
+        return renderTourDetails(booking.bookingDetails);
       default:
         return null;
     }

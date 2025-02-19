@@ -495,6 +495,88 @@ const BookingDetailsPage = ({ id }: { id: string }) => {
                             )}
                         </div>
                     );
+                case 'tour':
+                    return (
+                        <div className="space-y-6">
+                            {/* Tour Summary */}
+                            <Card className="p-6 space-y-6">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <div className="text-sm font-medium text-gray-500">Destination</div>
+                                        <div className="text-lg font-semibold">{details.destination}</div>
+                                    </div>
+                                    
+                                    <div className="space-y-2">
+                                        <div className="text-sm font-medium text-gray-500">Duration</div>
+                                        <div className="text-lg font-semibold">{details.days} days</div>
+                                    </div>
+                                </div>
+                
+                                <div className="space-y-4 pt-4 border-t">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <div className="text-sm font-medium text-gray-500">Departure Date</div>
+                                            <div className="text-sm mt-1">{formatDate(details.departure)}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-medium text-gray-500">Total Participants</div>
+                                            <div className="text-sm mt-1">{details.totalParticipants} people</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                
+                            {/* Participant Information */}
+                            <Card className="p-6">
+                                <h3 className="text-lg font-semibold mb-4">Participant Information</h3>
+                                <div className="space-y-4">
+                                    <div className="p-4 bg-gray-50 rounded-lg">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <div className="text-sm font-medium text-gray-500">Adults</div>
+                                                <div className="text-base mt-1">{details.adults}</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-medium text-gray-500">Children</div>
+                                                <div className="text-base mt-1">{details.children}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                
+                            {/* Tour Price Breakdown */}
+                            <Card className="p-6">
+                                <h3 className="text-lg font-semibold mb-4">Price Details</h3>
+                                <div className="space-y-4">
+                                    <div className="p-4 bg-gray-50 rounded-lg">
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between">
+                                                <span className="text-sm text-gray-600">Adults ({details.adults})</span>
+                                                <span className="text-sm font-medium">
+                                                    ${(booking.amount * (details.adults / details.totalParticipants)).toFixed(2)}
+                                                </span>
+                                            </div>
+                                            {details.children > 0 && (
+                                                <div className="flex justify-between">
+                                                    <span className="text-sm text-gray-600">Children ({details.children})</span>
+                                                    <span className="text-sm font-medium">
+                                                        ${(booking.amount * (details.children / details.totalParticipants)).toFixed(2)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            <div className="pt-3 border-t">
+                                                <div className="flex justify-between font-medium">
+                                                    <span>Total Amount</span>
+                                                    <span>${booking.amount.toFixed(2)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
+                    );
 
             default:
                 return null;

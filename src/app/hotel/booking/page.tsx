@@ -6,7 +6,7 @@ export default async function BookingPage({
 }: { 
   searchParams: any
 }) {
-  const { propertyToken, q, checkIn, checkOut, adults } = await searchParams
+  const { propertyToken, q, checkIn, checkOut, adults, offerId } = await searchParams
   return (
     <div className="w-full h-full flex flex-col justify-center items-center">
       <Header title="Hotel Booking" />
@@ -16,6 +16,7 @@ export default async function BookingPage({
         checkIn={checkIn}
         checkOut={checkOut}
         adults={parseInt(adults)}
+        offerId={offerId}
       />
     </div>
   )

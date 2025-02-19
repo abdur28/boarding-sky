@@ -190,6 +190,7 @@ export interface HotelOffer {
   description: string;
   location: HotelLocation;
   
+  
   // Basic info
   hotelClass?: number;
   checkIn?: string;
@@ -301,8 +302,6 @@ export interface SearchHotelOffersParams {
   boardType?: string;
   paymentPolicy?: string;
 }
-
-// types/car.ts
 
 export interface CarLocation {
   id: string;

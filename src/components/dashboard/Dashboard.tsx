@@ -3,10 +3,7 @@ import React, { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "../ui/sidebar";
 import { InfoIcon, Users2Icon, PlaneIcon, Hotel, Car, FileText, HandCoinsIcon, Handshake, MapIcon, BadgeCheck, Cog } from "lucide-react";
 import {
-  IconArrowLeft,
-  IconBrandTabler,
   IconSettings,
-  IconUserBolt,
 } from "@tabler/icons-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
@@ -15,16 +12,17 @@ import Info from "./Info";
 import Users from "./Users";
 import Transactions from "./Transactions";
 import Bookings from "./Bookings";
-import Airlines from "./Airlines";
 import Settings from "./Settings";
 import Blogs from "./Blogs";
 import Tours from "./Tours";
-import Cars from "./Cars";
-import Hotels from "./Hotels";
+import CarOffers from "./CarOffers";
+import HotelOffers from "./HotelOffers";
 import Deals from "./Deals";
 import Intro from "./Intro";
 import Configuration from "./Configuration";
-import FlightOffers from "./Flights";
+import FlightOffers from "./FlightOffers";
+import PrivacyPolicy from "./PrivacyPolicy";
+import TermsAndConditions from "./TermsAndConditions";
 
 const allLinks = [
   {
@@ -68,24 +66,24 @@ const allLinks = [
     roles: ["admin", "manager", "editor", "user"]
   },
   {
-    label: "Airlines",
-    id: "airlines",
+    label: "Flight Offers",
+    id: "flight-offers",
     icon: (
       <PlaneIcon className="text-neutral-700 h-5 w-5 flex-shrink-0" />
     ),
     roles: ["admin", "manager", "editor"]
   },
   {
-    label: "Hotels",
-    id: "hotels",
+    label: "Hotel Offers",
+    id: "hotel-offers",
     icon: (
       <Hotel className="text-neutral-700 h-5 w-5 flex-shrink-0" />
     ),
     roles: ["admin", "manager", "editor"]
   },
   {
-    label: "Cars",
-    id: "cars",
+    label: "Car Offers",
+    id: "car-offers",
     icon: (
       <Car className="text-neutral-700 h-5 w-5 flex-shrink-0" />
     ),
@@ -114,6 +112,18 @@ const allLinks = [
       <FileText className="text-neutral-700 h-5 w-5 flex-shrink-0" />
     ),
     roles: ["admin", "manager", "editor"]
+  },
+  {
+    label: "Privacy Policy",
+    id: "privacy-policy",
+    icon: <FileText className="text-neutral-700 h-5 w-5 flex-shrink-0" />,
+    roles: ["admin"],
+  },
+  {
+    label: "Terms & Conditions",
+    id: "terms-and-conditions",
+    icon: <FileText className="text-neutral-700 h-5 w-5 flex-shrink-0" />,
+    roles: ["admin"],
   },
   {
     label: "Settings",
@@ -231,12 +241,14 @@ const Content = ({ active, role, user }: { active: string; role: string, user: a
         {active === "configuration" && hasAccess("configuration") && <Configuration />}
         {active === "bookings" && hasAccess("bookings") && <Bookings userAsString={JSON.stringify(user)}/>}
         {active === "transactions" && hasAccess("transactions") && <Transactions userAsString={JSON.stringify(user)} />}
-        {active === "airlines" && hasAccess("airlines") && <FlightOffers />}
-        {active === "hotels" && hasAccess("hotels") && <Hotels />}
-        {active === "cars" && hasAccess("cars") && <Cars />}
+        {active === "flight-offers" && hasAccess("flight-offers") && <FlightOffers />}
+        {active === "hotel-offers" && hasAccess("hotel-offers") && <HotelOffers />}
+        {active === "car-offers" && hasAccess("car-offers") && <CarOffers />}
         {active === "tours" && hasAccess("tours") && <Tours />}
         {active === "deals" && hasAccess("deals") && <Deals role={role}/>}
         {active === "blogs" && hasAccess("blogs") && <Blogs />}
+        {active === "privacy-policy" && hasAccess("privacy-policy") && <PrivacyPolicy />}
+        {active === "terms-and-conditions" && hasAccess("terms-and-conditions") && <TermsAndConditions />}
         {active === "settings" && hasAccess("settings") && <Settings />}
       </div>
     </div>

@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DialogFooter } from "@/components/ui/dialog";
-import { HotelOffer, HotelImage, HotelLocation, HotelPrice, HotelRating, NearbyPlace } from '@/types';
+import { HotelOffer } from '@/types';
 import UploadImage from '../UploadImage';
 
 interface DynamicListInputProps {
@@ -318,8 +318,8 @@ const RoomForm = ({
                 cancellationPolicy: {
                   ...room.cancellationPolicy,
                   deadline: e.target.value
-                }
-              } as any)}
+                } as any
+              })}
               disabled={isLoading}
             />
           </div>
@@ -330,7 +330,7 @@ const RoomForm = ({
 };
 
 interface HotelOfferFormProps {
-  initialData: Omit<HotelOffer, 'id'>;
+  initialData: Omit<HotelOffer, 'id'> & { rooms?: Array<any> };
   onSubmit: (data: Omit<HotelOffer, 'id'>, imagesToDelete: string[]) => void;
   onCancel: () => void;
   isLoading: boolean;
@@ -349,7 +349,18 @@ const HotelOfferForm: React.FC<HotelOfferFormProps> = ({
     initialData.images.map(img => img.original || img.thumbnail)
   );
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
-  const [rooms, setRooms] = useState<RoomFormData[]>([]);
+  const [rooms, setRooms] = useState<RoomFormData[]>(
+    initialData.rooms?.map((room: RoomFormData) => ({
+      id: room.id,
+      name: room.name,
+      description: room.description,
+      maxOccupancy: room.maxOccupancy,
+      amenities: room.amenities,
+      images: room.images,
+      price: room.price,
+      cancellationPolicy: room.cancellationPolicy
+    })) || []
+  );
 
   useEffect(() => {
     if (uploadedImage) {
@@ -397,7 +408,9 @@ const HotelOfferForm: React.FC<HotelOfferFormProps> = ({
         }
       },
       cancellationPolicy: {
-        isCancellable: true
+        isCancellable: true,
+        deadline: ''
+        
       }
     };
     setRooms([...rooms, newRoom]);
@@ -422,6 +435,19 @@ const HotelOfferForm: React.FC<HotelOfferFormProps> = ({
     if (!formData.location.longitude) newErrors.longitude = 'Longitude is required';
     if (!formData.price.current) newErrors.price = 'Price is required';
     if (!formData.type) newErrors.type = 'Hotel type is required';
+    if (!formData.hotelClass) newErrors.hotelClass = 'Hotel class is required';
+    if (!formData.availableRooms || formData.availableRooms < 0) newErrors.availableRooms = 'Available rooms cannot be negative';
+
+    // Validate rooms
+    if (rooms.length === 0) {
+      newErrors.rooms = 'At least one room is required';
+    } else {
+      rooms.forEach((room, index) => {
+        if (!room.name) newErrors[`room-${index}-name`] = 'Room name is required';
+        if (!room.price.amount) newErrors[`room-${index}-price`] = 'Room price is required';
+        if (!room.maxOccupancy) newErrors[`room-${index}-occupancy`] = 'Max occupancy is required';
+      });
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -435,6 +461,16 @@ const HotelOfferForm: React.FC<HotelOfferFormProps> = ({
         images: uploadedImages.map(url => ({
           thumbnail: url,
           original: url,
+        })),
+        rooms: rooms.map(room => ({
+          id: room.id,
+          name: room.name,
+          description: room.description || '',
+          maxOccupancy: room.maxOccupancy,
+          amenities: room.amenities,
+          images: room.images,
+          price: room.price,
+          cancellationPolicy: room.cancellationPolicy
         }))
       };
       onSubmit(updatedFormData, imagesToDelete);
@@ -461,7 +497,7 @@ const HotelOfferForm: React.FC<HotelOfferFormProps> = ({
       />
 
       {/* Basic Information */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <div className="grid gap-2">
           <label className="text-sm font-medium">Hotel Name</label>
           <Input
@@ -493,6 +529,41 @@ const HotelOfferForm: React.FC<HotelOfferFormProps> = ({
           </Select>
           {errors.type && (
             <span className="text-xs text-red-500">{errors.type}</span>
+          )}
+        </div>
+
+        <div className="grid gap-2">
+          <label className="text-sm font-medium">Hotel Class (Stars)</label>
+          <Select
+            value={formData.hotelClass?.toString() || "0"}
+            onValueChange={(value) => handleChange('hotelClass', parseInt(value))}
+            disabled={isLoading}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1 Star</SelectItem>
+              <SelectItem value="2">2 Stars</SelectItem>
+              <SelectItem value="3">3 Stars</SelectItem>
+              <SelectItem value="4">4 Stars</SelectItem>
+              <SelectItem value="5">5 Stars</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid gap-2">
+          <label className="text-sm font-medium">Available Rooms</label>
+          <Input
+            type="number"
+            min="0"
+            value={formData.availableRooms}
+            onChange={(e) => handleChange('availableRooms', parseInt(e.target.value))}
+            disabled={isLoading}
+            className={errors.availableRooms ? 'border-red-500' : ''}
+          />
+          {errors.availableRooms && (
+            <span className="text-xs text-red-500">{errors.availableRooms}</span>
           )}
         </div>
       </div>

@@ -28,6 +28,18 @@ export function HotelCard({
   const router = useRouter();
 
   const handleBooking = () => {
+    if (offer.provider === 'direct') {
+      const params = new URLSearchParams({
+        offerId: offer.id,
+        checkIn: searchParams.checkIn,
+        checkOut: searchParams.checkOut,
+        adults: searchParams.adults.toString()
+      });
+
+      router.push(`/hotel/booking?${params.toString()}`);
+      return;
+    }
+
     if (!offer.propertyToken) {
       console.error('No property token available');
       return;

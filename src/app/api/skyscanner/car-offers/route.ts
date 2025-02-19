@@ -429,7 +429,7 @@ export async function POST(req: Request) {
         await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
 
         return NextResponse.json({
-            offers: MOCK_CARS,
+            data: MOCK_CARS,
             success: true,
         });
 

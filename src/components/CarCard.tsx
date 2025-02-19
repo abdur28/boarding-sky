@@ -1,3 +1,5 @@
+'use client'
+
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -11,8 +13,8 @@ interface CarCardProps {
   searchParams?: {
     pickupDate: string
     dropoffDate: string
-    pickupTime: string,      
-    dropoffTime: string,     
+    pickupTime: string
+    dropoffTime: string
     pickupLocation: string
     dropoffLocation?: string
   }
@@ -29,10 +31,11 @@ export function CarCard({
       offerId: offer.id,
       pickupDate: searchParams?.pickupDate || '',
       dropoffDate: searchParams?.dropoffDate || '',
+      pickupTime: searchParams?.pickupTime || '',
+      dropoffTime: searchParams?.dropoffTime || '',
       pickupLocation: searchParams?.pickupLocation || '',
       dropoffLocation: searchParams?.dropoffLocation || searchParams?.pickupLocation || '',
-      pickupTime: searchParams?.pickupTime || '10:00',
-      dropoffTime: searchParams?.dropoffTime || '10:00',
+      providerId: offer.provider,
     })
 
     router.push(`/car/booking?${params.toString()}`)

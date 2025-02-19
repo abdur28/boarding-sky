@@ -422,7 +422,7 @@ export async function POST(req: Request) {
         await new Promise(resolve => setTimeout(resolve, 500));
 
         return NextResponse.json({
-            offer: carOffer,
+            data: carOffer,
             success: true,
         });
 

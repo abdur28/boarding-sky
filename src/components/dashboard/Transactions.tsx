@@ -16,7 +16,7 @@ import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { useDashboard } from '@/hooks/useDashboard';
 
-const TRANSACTION_TYPES = ["All", "flight", "hotel", "car"];
+const TRANSACTION_TYPES = ["All", "flight", "hotel", "car", "tour"];
 const TRANSACTION_STATUS = ["All", "paid", "failed", "refunded"];
 
 interface TransactionsProps {
@@ -59,6 +59,8 @@ export default function Transactions({ userAsString }: TransactionsProps) {
         return "bg-purple-100 text-purple-800";
       case "car":
         return "bg-orange-100 text-orange-800";
+      case "tour":
+        return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
     }

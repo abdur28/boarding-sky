@@ -113,7 +113,6 @@ export async function updateFlightOffers(formData: FormData) {
     } else if (formatedData.id) {
       const offerId = formData.get('id');
       const { _id, ...updateData } = formatedData;
-      console.log(updateData);
       await collection.updateOne(
         { id: offerId as string },
         { $set: updateData }
@@ -130,80 +129,86 @@ export async function updateFlightOffers(formData: FormData) {
   }
 }
 
-export async function updateAirlines(formData: FormData) {
+export async function updateHotelOffers(formData: FormData) {
   try {
-    const collection = await getCollection("airlines");
+    const collection = await getCollection("hotelOffers");
     const data = Object.fromEntries(formData.entries());
-    const action = formData.get('action');
+    const formatedData = Object.fromEntries(
+      Object.entries(data).map(([key, value]) => {
+        if (typeof value === 'string') {
+          try {
+            return [key, JSON.parse(value)];
+          } catch (error) {
+            return [key, value];
+          }
+        }
+        return [key, value];
+      })
+    );
+    const action = formData.get('action')
 
     if (action === 'delete') {
-      await collection.deleteOne({ _id: new mongoose.Types.ObjectId(data._id as string) });
-    } else if (data._id) {
-      const { _id, ...updateData } = data;
+      const id = formData.get('id');
+      await collection.deleteOne({ id: id as string });
+    } else if (formatedData.id) {
+      const offerId = formData.get('id');
+      const { _id, ...updateData } = formatedData;
       await collection.updateOne(
-        { _id: new mongoose.Types.ObjectId(_id as string) },
+        { id: offerId as string },
         { $set: updateData }
       );
     } else {
-      await collection.insertOne(data);
+      const id = randomUUID().replace(/-/g, '');
+      formatedData.id = id;
+      const res = await collection.insertOne(formatedData);
     }
     return { success: true };
   } catch (error) {
-    console.error('Failed to update airline:', error);
+    console.error('Failed to update hotel offer:', error);
     return { success: false, error };
   }
 }
 
-export async function updateCars(formData: FormData) {
+export async function updateCarOffers(formData: FormData) {
   try {
-    const collection = await getCollection("cars");
+    const collection = await getCollection("carOffers");
     const data = Object.fromEntries(formData.entries());
-    const action = formData.get('action');
+    const formatedData = Object.fromEntries(
+      Object.entries(data).map(([key, value]) => {
+        if (typeof value === 'string') {
+          try {
+            return [key, JSON.parse(value)];
+          } catch (error) {
+            return [key, value];
+          }
+        }
+        return [key, value];
+      })
+    );
+    const action = formData.get('action')
 
     if (action === 'delete') {
-      await collection.deleteOne({ _id: new mongoose.Types.ObjectId(data._id as string) });
-    } else if (data._id) {
-      const { _id, ...updateData } = data;
+      const id = formData.get('id');
+      await collection.deleteOne({ id: id as string });
+    } else if (formatedData.id) {
+      const offerId = formData.get('id');
+      const { _id, ...updateData } = formatedData;
       await collection.updateOne(
-        { _id: new mongoose.Types.ObjectId(_id as string) },
+        { id: offerId as string },
         { $set: updateData }
       );
     } else {
-      await collection.insertOne(data);
+      const id = randomUUID().replace(/-/g, '');
+      formatedData.id = id;
+      const res = await collection.insertOne(formatedData);
     }
     return { success: true };
   } catch (error) {
-    console.error('Failed to update car:', error);
+    console.error('Failed to update car offer:', error);
     return { success: false, error };
   }
 }
 
-export async function updateHotels(formData: FormData) {
-  try {
-    const collection = await getCollection("hotels");
-    const data = Object.fromEntries(formData.entries());
-    const action = formData.get('action');
-    const images = JSON.parse(formData.get('images') as string);
-
-    data.images = images;
-
-    if (action === 'delete') {
-      await collection.deleteOne({ _id: new mongoose.Types.ObjectId(data._id as string) });
-    } else if (data._id) {
-      const { _id, ...updateData } = data;
-      await collection.updateOne(
-        { _id: new mongoose.Types.ObjectId(_id as string) },
-        { $set: updateData }
-      );
-    } else {
-      await collection.insertOne(data);
-    }
-    return { success: true };
-  } catch (error) {
-    console.error('Failed to update hotel:', error);
-    return { success: false, error };
-  }
-}
 
 export async function updateBlogs(formData: any) {
   try {
@@ -318,4 +323,35 @@ export async function updateDestinations(formData: FormData) {
     console.error('Failed to update destination:', error);
     return { success: false, error };
   }
+}
+
+
+export async function fetchPrivacyPolicy(): Promise<string> {
+  const collection = await getCollection('policy');
+  const data = await collection.findOne({ type: 'privacy-policy' });
+  return data?.content || '';
+}
+
+export async function updatePrivacyPolicy(content: string): Promise<void> {
+  const collection = await getCollection('policy');
+  await collection.updateOne(
+    { type: 'privacy-policy' },
+    { $set: { content } },
+    { upsert: true }
+  );
+}
+
+export async function fetchTermsAndConditions(): Promise<string> {
+  const collection = await getCollection('policy');
+  const data = await collection.findOne({ type: 'terms-and-conditions' });
+  return data?.content || '';
+}
+
+export async function updateTermsAndConditions(content: string): Promise<void> {
+  const collection = await getCollection('policy');
+  await collection.updateOne(
+    { type: 'terms-and-conditions' },
+    { $set: { content } },
+    { upsert: true }
+  );
 }

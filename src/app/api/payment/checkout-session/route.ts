@@ -9,7 +9,7 @@ import { getUser } from "@/lib/data";
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-type BookingType = 'car' | 'flight' | 'hotel';
+type BookingType = 'car' | 'flight' | 'hotel' | 'tour';
 
 interface BaseBookingDetails {
   email: string;
@@ -73,6 +73,28 @@ interface HotelBookingDetails extends BaseBookingDetails {
     };
 }
 
+interface TourBookingDetails extends BaseBookingDetails {
+    totalParticipants: number;
+    adults: number;
+    children: number;
+    departure: string;
+    agreeToTerms: boolean;
+}
+
+interface TourOffer {
+    id: string;
+    name: string;
+    tourId: string;
+    destination: string;
+    days: number;
+    departure: string;
+    price: {
+        amount: number;
+        currency: string;
+    };
+    provider: string;
+}
+
 export async function POST(req: Request) {
     noStore();
     try {
@@ -96,8 +118,8 @@ export async function POST(req: Request) {
         }: {
             bookingType: BookingType;
             price: number;
-            offer: CarOffer | FlightOffer | HotelOffer;
-            bookingDetails: CarBookingDetails | FlightBookingDetails | HotelBookingDetails;
+            offer: CarOffer | FlightOffer | HotelOffer | TourOffer; 
+            bookingDetails: CarBookingDetails | FlightBookingDetails | HotelBookingDetails | TourBookingDetails;
             provider: string;
             addProtection: boolean;
         } = body;
@@ -219,6 +241,32 @@ export async function POST(req: Request) {
                         guests: hotelDetails.guests,
                         specialRequests: hotelDetails.specialRequests,
                         roomDetails: hotelDetails.roomDetails
+                    });
+                    break;
+
+                case 'tour':
+                    const tourOffer = offer as TourOffer;
+                    const tourDetails = bookingDetails as TourBookingDetails;
+                    lineItem = {
+                        price_data: {
+                            currency: tourOffer.price.currency.toLowerCase(),
+                            product_data: {
+                                name: `Tour - ${tourOffer.name}`,
+                                description: `${tourOffer.destination} - ${tourOffer.days} days, Departure: ${tourDetails.departure}`,
+                            },
+                            unit_amount: Math.round(price * 100),
+                        },
+                        quantity: 1,
+                    };
+                    metadata.actualAmount = Math.round(tourOffer.price.amount * 100);
+                    metadata.tour = JSON.stringify({
+                        tourId: tourOffer.tourId,
+                        destination: tourOffer.destination,
+                        days: tourOffer.days,
+                        departure: tourDetails.departure,
+                        totalParticipants: tourDetails.totalParticipants,
+                        adults: tourDetails.adults,
+                        children: tourDetails.children
                     });
                     break;
 
