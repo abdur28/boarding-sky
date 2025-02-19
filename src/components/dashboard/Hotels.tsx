@@ -1,206 +1,118 @@
 import React, { useState, useMemo, useTransition, useEffect } from 'react';
-import { Search, Pencil, Trash2, Plus, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Hotel,
+  Search,
+  MapPin,
+  Star,
+  DollarSign,
+  Users,
+  Pencil,
+  Trash2,
+  Plus,
+  Loader2,
+  Building,
+  BadgeCheck
+} from "lucide-react";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
 } from "@/components/ui/dialog";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { updateHotels } from '@/lib/action';
-import UploadImage from '../UploadImage';
 import { useDashboard } from '@/hooks/useDashboard';
+import { HotelOffer } from '@/types';
+import Image from 'next/image';
+import HotelOfferForm from '../forms/HotellOfferForm';
 
-interface Hotel {
-  _id: string;
-  name: string;
-  iata: string;
-  hotelId: string;
-  images: string[];
-}
-
-type HotelFormData = Omit<Hotel, '_id'>;
-
-const initialFormState: HotelFormData = {
-  name: "",
-  iata: "",
-  hotelId: "",
-  images: [] as string[]
+const initialFormState: Omit<HotelOffer, 'id'> = {
+  type: 'hotel',
+  name: '',
+  provider: 'direct',
+  description: '',
+  location: {
+    latitude: 0,
+    longitude: 0,
+    address: '',
+  },
+  hotelClass: 0,
+  amenities: [],
+  images: [],
+  price: {
+    current: 0,
+    currency: 'USD',
+    includesTaxes: true
+  },
+  rating: {
+    overall: 0,
+    totalReviews: 0
+  },
+  availableRooms: 0
 };
 
-const HotelForm = ({ 
-  initialData,
-  onSubmit,
-  onCancel,
-  isLoading 
-}: {
-  initialData: HotelFormData;
-  onSubmit: (data: HotelFormData, imagesToDelete: string[]) => void;
-  onCancel: () => void;
-  isLoading: boolean;
-}) => {
-  const initialImages = initialData?.images ?? [];
-  const [formData, setFormData] = useState({
-    ...initialData,
-    images: initialImages
-  });
-  const [uploadedImage, setUploadedImage] = useState<string>('');
-  const [uploadedImages, setUploadedImages] = useState<string[]>(initialImages);
-  const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (uploadedImage) {
-      setUploadedImages(prev => [...(prev || []), uploadedImage]);
-      setUploadedImage('');
-    }
-  }, [uploadedImage]);
-
-  const handleChange = (field: keyof HotelFormData, value: any) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      [field]: field === 'iata' ? value.toUpperCase() : value 
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit({
-      ...formData,
-      images: uploadedImages || []
-    }, imagesToDelete);
-  };
-
-  const handleCancel = () => {
-    setImagesToDelete([]);
-    onCancel();
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <div className="grid gap-4 py-4">
-        <UploadImage
-          uploadedImages={uploadedImages}
-          setUploadedImage={setUploadedImage}
-          multiple={true}
-          maxFiles={5}
-          onRemove={(index) => {
-            const imageToDelete = uploadedImages[index];
-            setUploadedImages(prev => (prev || []).filter((_, i) => i !== index));
-            if (imageToDelete && initialImages.includes(imageToDelete)) {
-              setImagesToDelete(prev => [...prev, imageToDelete]);
-            }
-          }}
-        />
-
-        <div className="grid gap-2">
-          <label className="text-sm font-medium">Hotel Name</label>
-          <Input
-            value={formData.name}
-            onChange={(e) => handleChange('name', e.target.value)}
-            placeholder="Enter hotel name"
-            disabled={isLoading}
-          />
-        </div>
-
-        <div className="grid gap-2">
-          <label className="text-sm font-medium">IATA Code</label>
-          <Input
-            value={formData.iata}
-            onChange={(e) => handleChange('iata', e.target.value)}
-            placeholder="Enter IATA code"
-            maxLength={3}
-            className="uppercase"
-            disabled={isLoading}
-          />
-        </div>
-
-        <div className="grid gap-2">
-          <label className="text-sm font-medium">Hotel ID</label>
-          <Input
-            value={formData.hotelId}
-            onChange={(e) => handleChange('hotelId', e.target.value)}
-            placeholder="Enter hotel ID"
-            disabled={isLoading}
-          />
-        </div>
-      </div>
-      
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={handleCancel} disabled={isLoading}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            'Submit'
-          )}
-        </Button>
-      </DialogFooter>
-    </form>
-  );
-};
-
-export default function Hotels() {
-  const { hotels, getHotels, isLoading: isDataLoading, deleteImages } = useDashboard();
+export default function HotelOffers() {
+  const { hotelOffers, getHotelOffers, isLoading: isDataLoading, deleteImages } = useDashboard();
   const [isPending, startTransition] = useTransition();
-  const [hotelsData, setHotelsData] = useState<Hotel[]>([]);
+  const [hotelsData, setHotelsData] = useState<HotelOffer[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [editingHotel, setEditingHotel] = useState<Hotel | null>(null);
-  const [deletingHotel, setDeletingHotel] = useState<Hotel | null>(null);
+  const [editingHotel, setEditingHotel] = useState<HotelOffer | null>(null);
+  const [deletingHotel, setDeletingHotel] = useState<HotelOffer | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    getHotels();
+    getHotelOffers();
   }, []);
 
   useEffect(() => {
-    if (hotels) {
-      const processedHotels = hotels.map(hotel => ({
-        ...hotel,
-        images: hotel.images || []
-      }));
-      setHotelsData(processedHotels);
+    if (hotelOffers) {
+      setHotelsData(hotelOffers);
     }
-  }, [hotels]);
+  }, [hotelOffers]);
 
   const filteredHotels = useMemo(() => {
     const query = searchQuery.toLowerCase();
     return hotelsData.filter(hotel => 
       hotel.name.toLowerCase().includes(query) ||
-      hotel.iata.toLowerCase().includes(query) ||
-      hotel.hotelId.toLowerCase().includes(query)
+      hotel.location.address?.toLowerCase().includes(query)
     );
   }, [hotelsData, searchQuery]);
 
-  const handleAdd = async (data: HotelFormData, imagesToDelete: string[]) => {
+  const handleAdd = async (data: Omit<HotelOffer, 'id'>, imagesToDelete: string[]) => {
     setIsProcessing(true);
     const formData = new FormData();
     
     Object.entries(data).forEach(([key, value]) => {
-      if (key === 'images') {
-        const imagesArray = Array.isArray(value) ? value : [];
-        formData.append('images', JSON.stringify(imagesArray));
+      if (typeof value === 'object') {
+        formData.append(key, JSON.stringify(value));
       } else {
         formData.append(key, value?.toString() || '');
       }
     });
-
+  
     startTransition(async () => {
       try {
         await updateHotels(formData);
         if (imagesToDelete.length > 0) {
-          deleteImages(imagesToDelete);
+          await deleteImages(imagesToDelete);
         }
-        await getHotels();
+        await getHotelOffers();
         setIsAddDialogOpen(false);
       } catch (error) {
         console.error('Failed to add hotel:', error);
@@ -210,36 +122,27 @@ export default function Hotels() {
     });
   };
 
-  const handleEdit = (hotel: Hotel) => {
-    setEditingHotel({
-      ...hotel,
-      images: hotel.images || []
-    });
-    setIsEditDialogOpen(true);
-  };
-
-  const handleUpdate = async (data: HotelFormData, imagesToDelete: string[]) => {
+  const handleUpdate = async (data: Omit<HotelOffer, 'id'>, imagesToDelete: string[]) => {
     if (!editingHotel) return;
     setIsProcessing(true);
-
+  
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
-      if (key === 'images') {
-        const imagesArray = Array.isArray(value) ? value : [];
-        formData.append('images', JSON.stringify(imagesArray));
+      if (typeof value === 'object') {
+        formData.append(key, JSON.stringify(value));
       } else {
         formData.append(key, value?.toString() || '');
       }
     });
-    formData.append('_id', editingHotel._id.toString());
-
+    formData.append('_id', editingHotel.id.toString());
+  
     startTransition(async () => {
       try {
         await updateHotels(formData);
         if (imagesToDelete.length > 0) {
-          deleteImages(imagesToDelete);
+          await deleteImages(imagesToDelete);
         }
-        await getHotels();
+        await getHotelOffers();
         setIsEditDialogOpen(false);
         setEditingHotel(null);
       } catch (error) {
@@ -250,11 +153,13 @@ export default function Hotels() {
     });
   };
 
-  const handleDelete = (hotel: Hotel) => {
-    setDeletingHotel({
-      ...hotel,
-      images: hotel.images || []
-    });
+  const handleEdit = (hotel: HotelOffer) => {
+    setEditingHotel(hotel);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDelete = (hotel: HotelOffer) => {
+    setDeletingHotel(hotel);
     setIsDeleteDialogOpen(true);
   };
 
@@ -265,14 +170,14 @@ export default function Hotels() {
     startTransition(async () => {
       try {
         const formData = new FormData();
-        formData.append('_id', deletingHotel._id.toString());
+        formData.append('_id', deletingHotel.id.toString());
         formData.append('action', 'delete');
         
         await updateHotels(formData);
         if (deletingHotel.images.length > 0) {
-          deleteImages(deletingHotel.images);
+          await deleteImages(deletingHotel.images.map(img => img.original || img.thumbnail));
         }
-        await getHotels();
+        await getHotelOffers();
         setIsDeleteDialogOpen(false);
         setDeletingHotel(null);
       } catch (error) {
@@ -298,7 +203,7 @@ export default function Hotels() {
         <div className="relative flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="Search by hotel name, IATA code, or hotel ID..."
+            placeholder="Search by hotel name or location..."
             className="pl-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -313,36 +218,104 @@ export default function Hotels() {
       </div>
 
       <div className="grid gap-4">
-        {filteredHotels.map((hotel) => (
+        {filteredHotels.map((hotel: HotelOffer) => (
           <div
-            key={hotel._id}
-            className="flex items-center justify-between p-4 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow"
+            key={hotel.id}
+            className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300"
           >
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-900">{hotel.name}</span>
-              <div className="flex gap-4 text-sm text-gray-500">
-                <span>IATA: {hotel.iata}</span>
-                <span>Hotel ID: {hotel.hotelId}</span>
+            <div className="flex flex-col md:flex-row">
+              {/* Image Section */}
+              <div className="relative w-full md:w-48 h-48 md:h-auto">
+                {hotel.images && hotel.images.length > 0 ? (
+                  <Image
+                    src={hotel.images[0].original || hotel.images[0].thumbnail}
+                    alt={hotel.name}
+                    fill
+                    className="object-cover rounded-t-lg md:rounded-l-lg md:rounded-t-none"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-100 flex items-center justify-center rounded-t-lg md:rounded-l-lg md:rounded-t-none">
+                    <Building className="h-8 w-8 text-gray-400" />
+                  </div>
+                )}
+                {hotel.type && (
+                  <Badge 
+                    className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm"
+                    variant="secondary"
+                  >
+                    {hotel.type}
+                  </Badge>
+                )}
               </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Button
-                onClick={() => handleEdit(hotel)}
-                variant="ghost"
-                size="icon"
-                disabled={isProcessing}
-              >
-                <Pencil className="h-4 w-4 text-gray-500" />
-              </Button>
-              <Button
-                onClick={() => handleDelete(hotel)}
-                variant="ghost"
-                size="icon"
-                disabled={isProcessing}
-              >
-                <Trash2 className="h-4 w-4 text-red-500" />
-              </Button>
+
+              {/* Content Section */}
+              <div className="flex-1 p-4">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-semibold">{hotel.name}</h3>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <MapPin className="h-4 w-4 mr-1" />
+                      {hotel.location.address || 'Location not specified'}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      onClick={() => handleEdit(hotel)}
+                      variant="ghost"
+                      size="icon"
+                      disabled={isProcessing}
+                    >
+                      <Pencil className="h-4 w-4 text-gray-500" />
+                    </Button>
+                    <Button
+                      onClick={() => handleDelete(hotel)}
+                      variant="ghost"
+                      size="icon"
+                      disabled={isProcessing}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Hotel Details Grid */}
+                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Star className="h-4 w-4 mr-2" />
+                    {hotel.hotelClass || 0} Stars
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Users className="h-4 w-4 mr-2" />
+                    {hotel.availableRooms || 0} rooms available
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    {hotel.price.currency} {hotel.price.current.toLocaleString()}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <BadgeCheck className="h-4 w-4 mr-2" />
+                    {hotel.rating.overall.toFixed(1)} ({hotel.rating.totalReviews} reviews)
+                  </div>
+                </div>
+
+                {/* Amenities */}
+                {hotel.amenities && hotel.amenities.length > 0 && (
+                  <div className="mt-4">
+                    <div className="flex flex-wrap gap-2">
+                      {hotel.amenities.slice(0, 3).map((amenity, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {amenity}
+                        </Badge>
+                      ))}
+                      {hotel.amenities.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{hotel.amenities.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -355,14 +328,14 @@ export default function Hotels() {
       </div>
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-3xl" onClose={() => setIsAddDialogOpen(false)}>
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Add New Hotel</DialogTitle>
             <DialogDescription>
               Enter the hotel details below
             </DialogDescription>
           </DialogHeader>
-          <HotelForm
+          <HotelOfferForm
             initialData={initialFormState}
             onSubmit={handleAdd}
             onCancel={() => setIsAddDialogOpen(false)}
@@ -372,7 +345,7 @@ export default function Hotels() {
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-3xl" onClose={() => setIsEditDialogOpen(false)}>
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Edit Hotel</DialogTitle>
             <DialogDescription>
@@ -380,7 +353,7 @@ export default function Hotels() {
             </DialogDescription>
           </DialogHeader>
           {editingHotel && (
-            <HotelForm
+            <HotelOfferForm
               initialData={editingHotel}
               onSubmit={handleUpdate}
               onCancel={() => setIsEditDialogOpen(false)}
@@ -400,9 +373,7 @@ export default function Hotels() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isProcessing}
-             onCancel={() => setIsDeleteDialogOpen(false)}
-            >Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isProcessing}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmDelete} 
               className="bg-red-500 hover:bg-red-600"

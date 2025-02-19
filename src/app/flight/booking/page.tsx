@@ -2,6 +2,7 @@
 import Header from '@/components/Header'
 import FlightBookingPage from '@/components/pages/FlightBookingPage'
 import { FlightOffer } from '@/types'
+import { off } from 'process'
 
 interface BookingSearchParams {
   offerId: string
@@ -39,6 +40,23 @@ async function getFlightOffer(params: BookingSearchParams) {
   let token = ''
   if (params.providerId === 'amadeus') {
     token = await getAmadeusToken()
+  }
+
+  if (params.providerId === 'direct') {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/actions/get-flight-offer`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({id: params.offerId}),
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch flight offer')
+    }
+
+    const data = await response.json()
+    return data.data
   }
 
   const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/${params.providerId}/flight-offer`, {

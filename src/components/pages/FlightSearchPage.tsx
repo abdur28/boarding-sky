@@ -154,9 +154,9 @@ const FlightSearchPage = ({
 
         return (
             <div className="w-full flex flex-col gap-5">
-                {currentPageOffers.map((offer: FlightOffer) => (
+                {currentPageOffers.map((offer: FlightOffer, index: number) => (
                     <FlightCard
-                        key={offer.id}
+                        key={index}
                         offer={JSON.stringify(offer)}
                         origin={origin}
                         destination={destination}

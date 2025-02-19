@@ -23,7 +23,8 @@ import Cars from "./Cars";
 import Hotels from "./Hotels";
 import Deals from "./Deals";
 import Intro from "./Intro";
-import Providers from "./Provider";
+import Configuration from "./Configuration";
+import FlightOffers from "./Flights";
 
 const allLinks = [
   {
@@ -35,8 +36,8 @@ const allLinks = [
     roles: ["admin"]
   },
   {
-    label: "Providers",
-    id: "providers",
+    label: "Configuration",
+    id: "configuration",
     icon: (
       <Cog className="text-neutral-700 h-5 w-5 flex-shrink-0" />
     ),
@@ -227,10 +228,10 @@ const Content = ({ active, role, user }: { active: string; role: string, user: a
         {active === "dashboard" && <Intro role={role}/>}
         {active === "info" && hasAccess("info") && <Info />}
         {active === "users" && hasAccess("users") && <Users />}
-        {active === "providers" && hasAccess("providers") && <Providers />}
+        {active === "configuration" && hasAccess("configuration") && <Configuration />}
         {active === "bookings" && hasAccess("bookings") && <Bookings userAsString={JSON.stringify(user)}/>}
         {active === "transactions" && hasAccess("transactions") && <Transactions userAsString={JSON.stringify(user)} />}
-        {active === "airlines" && hasAccess("airlines") && <Airlines />}
+        {active === "airlines" && hasAccess("airlines") && <FlightOffers />}
         {active === "hotels" && hasAccess("hotels") && <Hotels />}
         {active === "cars" && hasAccess("cars") && <Cars />}
         {active === "tours" && hasAccess("tours") && <Tours />}

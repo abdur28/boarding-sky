@@ -25,6 +25,7 @@ interface FlightCardProps {
   }>;
   providerId: string
   refundable?: boolean
+  validatingCarrierName?: string
 }
 
 
@@ -126,10 +127,10 @@ const FlightSegmentDetails = ({
               <span className="font-medium">Aircraft:</span> {segment.aircraft.name || aircrafts[segment.aircraft.code]}
             </p>
           </div>
-          <div className="text-xs text-right">
+          {fareDetail && fareDetail.cabin && <div className="text-xs text-right">
             <p className="font-medium">{fareDetail.cabin} Class</p>
             {fareDetail.class && <p className="text-muted-foreground">Class {fareDetail.class}</p>}
-          </div>
+          </div>}
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
@@ -161,7 +162,7 @@ const FlightSegmentDetails = ({
           </div>
         </div>
 
-        <BaggageInfo fareDetail={fareDetail} />
+        {fareDetail && <BaggageInfo fareDetail={fareDetail} />}
       </div>
     </div>
   )
@@ -198,7 +199,7 @@ const FlightRoute = ({
           <div className="relative flex justify-center">
             <span>
               <div className="flex flex-col items-center gap-1">
-                <span className="text-muted-foreground">{itinerary.duration.split('T')[1].toLowerCase()}</span>
+                <span className="text-muted-foreground">{itinerary.duration.split('T')[1] ? itinerary.duration.split('T')[1].toLowerCase() : itinerary.duration.split(":").join('h')}</span>
                 <Plane 
                   className={`h-6 w-6 ${isReturn ? 'rotate-[-135deg]' : 'rotate-45'} text-first`}
                   fill="#071952"
@@ -243,6 +244,7 @@ const FlightCard = ({
     origin,
     destination,
     locations:flightOffer.dictionaries?.locations || {},
+    validatingCarrierName:flightOffer.meta.validatingCarrierName
   }
 
   const {
@@ -255,6 +257,7 @@ const FlightCard = ({
     aircrafts,
     oneWay,
     airlineCodes,
+    validatingCarrierName,
     locations
   } = flightCardProps
 
@@ -281,7 +284,7 @@ const FlightCard = ({
               />
               <div className="space-y-1">
                 <h3 className="font-medium">
-                  {airlineCodes.length > 1 ? 'Multiple Airlines' : airlines[airlineCodes[0]]}
+                  {validatingCarrierName || (airlineCodes.length > 1 ? 'Multiple Airlines' : airlines[airlineCodes[0]])}
                 </h3>
                 <div className="flex gap-2">
                   {providerId && (
@@ -366,9 +369,9 @@ const FlightCard = ({
 
             <div className="flex flex-col items-start justify-between">
               <span className="text-xs text-muted-foreground">
-                {fareDetailsBySegment[itineraries[0].segments.length].baggage.cabin?.quantity} carry-on included
+                {fareDetailsBySegment[itineraries[0].segments.length] ? fareDetailsBySegment[itineraries[0].segments.length].baggage.cabin?.quantity : fareDetailsBySegment[0].baggage.cabin?.quantity} carry-on included
               </span>
-              <Button
+              <Button 
                 variant="ghost"
                 className="hover:text-third p-0 h-full"
                 onClick={(e) => {

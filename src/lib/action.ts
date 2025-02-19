@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import { clerkClient } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { unstable_noStore as noStore } from "next/cache";
+import { randomInt, randomUUID } from "crypto";
 
 async function getCollection(collectionName: string) {
   const mongoClient = await client;
@@ -84,6 +85,47 @@ export async function deleteUser(formData: FormData) {
     return { success: true };
   } catch (error) {
     console.error('Failed to delete user:', error);
+    return { success: false, error };
+  }
+}
+
+export async function updateFlightOffers(formData: FormData) {
+  try {
+    const collection = await getCollection("flightOffers");
+    const data = Object.fromEntries(formData.entries());
+    const formatedData = Object.fromEntries(
+      Object.entries(data).map(([key, value]) => {
+        if (typeof value === 'string') {
+          try {
+            return [key, JSON.parse(value)];
+          } catch (error) {
+            return [key, value];
+          }
+        }
+        return [key, value];
+      })
+    );
+    const action = formData.get('action');
+
+    if (action === 'delete') {
+      const id = formData.get('id');
+      await collection.deleteOne({ id: id as string });
+    } else if (formatedData.id) {
+      const offerId = formData.get('id');
+      const { _id, ...updateData } = formatedData;
+      console.log(updateData);
+      await collection.updateOne(
+        { id: offerId as string },
+        { $set: updateData }
+      );
+    } else {
+      const id = randomUUID().replace(/-/g, '');
+      formatedData.id = id;
+      await collection.insertOne(formatedData);
+    }
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to update flight offer:', error);
     return { success: false, error };
   }
 }

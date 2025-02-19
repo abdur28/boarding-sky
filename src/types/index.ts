@@ -117,6 +117,7 @@ export interface FlightOffer {
       isEcoContender?: boolean;
     };
     validatingCarrier: string;
+    validatingCarrierName?: string;
   };
   dictionaries?: {
     carriers: Record<string, string>;

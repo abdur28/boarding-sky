@@ -11,10 +11,11 @@ type DashboardState = {
     bookings: Array<any>;
     receipts: Array<any>;
     blogs: Array<any>;
-    hotels: Array<any>;
+    hotelOffers: Array<any>;
     tours: Array<any>;
     cars: Array<any>;
     airlines: Array<any>;
+    flightOffers: Array<any>;
     flightDeals: Array<any>;
     destinations: Array<any>;
     deleteImages(urls: string[]): Promise<void>;
@@ -24,9 +25,10 @@ type DashboardState = {
     getReceipts(filter?: string): Promise<void>;
     updateBookings(update: any): Promise<void>;
     getBlogs(): Promise<void>;
-    getHotels(): Promise<void>;
+    getHotelOffers(): Promise<void>;
     getTours(): Promise<void>;
     getCars(): Promise<void>;
+    getFlightOffers(): Promise<void>;
     getAirlines(): Promise<void>;
     getFlightDeals(): Promise<void>;
     getDestinations(): Promise<void>;
@@ -39,13 +41,15 @@ export const useDashboard = create<DashboardState>((set, get) => ({
     bookings: [],
     receipts: [],
     blogs: [],
-    hotels: [],
+    hotelOffers: [],
     tours: [],
     cars: [],
     airlines: [],
+    flightOffers: [],
     flightDeals: [],
     destinations: [],
     deleteImages: async (urls: string[]) => {
+
         if (urls.length === 0) {
             return
         };
@@ -189,10 +193,10 @@ export const useDashboard = create<DashboardState>((set, get) => ({
             set({ isLoading: false });
         }
     },
-    getHotels: async () => {
+    getHotelOffers: async () => {
         set({ isLoading: true });
         try {
-            const response = await fetch("/api/actions/get-hotels", {
+            const response = await fetch("/api/actions/get-hotel-offers", {
                 cache: "no-store",
                 method: "POST",
                 headers: {
@@ -200,7 +204,7 @@ export const useDashboard = create<DashboardState>((set, get) => ({
                 },
             });
             const data = await response.json();
-            set({ isLoading: false, hotels: data.data });
+            set({ isLoading: false, hotelOffers: data.data });
             return data;
         } catch (err) {
             console.error("Failed to get info:", err);
@@ -279,6 +283,26 @@ export const useDashboard = create<DashboardState>((set, get) => ({
             set({ isLoading: false });
         }
     },
+
+    getFlightOffers: async () => {
+        set({ isLoading: true });
+        try {
+            const response = await fetch("/api/actions/get-flight-offers", {
+                cache: "no-store",
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+            const data = await response.json();
+            set({ isLoading: false, flightOffers: data.data });
+            return data;
+        } catch (err) {
+            console.error("Failed to get info:", err);
+            set({ isLoading: false });
+        }
+    },
+    
     getFlightDeals: async () => {
         set({ isLoading: true });
         try {
