@@ -91,6 +91,7 @@ export const useCar = create<CarState>((set, get) => ({
                             dropOffDate: params.dropOffDate,
                             pickUpTime: params.pickUpTime,
                             dropOffTime: params.dropOffTime,
+                            market: params.market || 'US',
                         }),
                     });
                 } else {

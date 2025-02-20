@@ -19,6 +19,7 @@ interface CarSearchPageProps {
     pickUpTime: string;    
     dropOffTime: string;  
     page: number
+    market: string
     priceRangeStr?: string
     transmission?: string[]
     category?: string[]
@@ -34,6 +35,7 @@ const CarSearchPage = ({
     dropOffDate,
     pickUpTime,        
     dropOffTime, 
+    market,
     page = 1,
     priceRangeStr,
     transmission,
@@ -62,6 +64,7 @@ const CarSearchPage = ({
                 dropOffDate,
                 pickUpTime,   
                 dropOffTime, 
+                market,
                 providers: ['direct', 'skyscanner']
             }
 

@@ -153,36 +153,6 @@ const CarPage = () => {
           />
         </div>
       </div>
-
-      {/* Popular Locations */}
-      <div className="w-full px-5 py-12 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-semibold mb-8">Popular Car Rental Locations</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <FeaturedLocation
-              image="/placeholder-image.png"
-              city="New York"
-              country="United States"
-              price={45}
-              cars={150}
-            />
-            <FeaturedLocation
-              image="/placeholder-image.png"
-              city="Los Angeles"
-              country="United States"
-              price={39}
-              cars={120}
-            />
-            <FeaturedLocation
-              image="/placeholder-image.png"
-              city="Miami"
-              country="United States"
-              price={42}
-              cars={90}
-            />
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

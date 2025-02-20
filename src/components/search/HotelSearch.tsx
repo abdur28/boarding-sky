@@ -35,7 +35,7 @@ export default function Component() {
 
   const handleHotelSearch = async() => {
     if (!destination || !dates.from || !dates.to) return
-    const city = destination.split(' - ')[1]
+    const city = destination.split(' - ')[0]
     const checkIn = dates.from.toISOString().split('T')[0]
     const checkOut = dates.to.toISOString().split('T')[0]
     const adults = guests.adults

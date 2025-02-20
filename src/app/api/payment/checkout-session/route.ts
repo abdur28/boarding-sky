@@ -1,9 +1,10 @@
 // app/api/create-checkout-session/route.ts
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { NextResponse } from "next/server";
 import { unstable_noStore as noStore } from "next/cache";
 import { CarOffer, FlightOffer, HotelOffer } from "@/types";
 import { getUser } from "@/lib/data";
+import { ServiceConfig } from "@/lib/service-config";
 
 
 export const dynamic = 'force-dynamic';
@@ -106,6 +107,8 @@ export async function POST(req: Request) {
                 { status: 401 }
             );
         }
+
+        const stripe = await getStripe();
 
         const body = await req.json();
         const { 

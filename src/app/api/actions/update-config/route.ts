@@ -1,25 +1,25 @@
 // app/api/actions/update-config/route.ts
 import { NextResponse } from "next/server";
-import { getUser } from "@/lib/data";
+import { auth } from "@clerk/nextjs/server";
+import { ApiKeyManager } from "@/lib/api-keys";
+import { Encryption } from "@/lib/crypto";
 import client from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 
 export async function POST(req: Request) {
     try {
-        const user = await getUser();
-        if (!user) {
+        // Check auth
+        const { userId } = await auth();
+        if (!userId) {
             return NextResponse.json(
                 { error: 'Unauthorized' },
                 { status: 401 }
             );
         }
 
-        // Check if user is admin
-        const role = user.role.toLowerCase();
-        if (role !== 'admin') {
-            return NextResponse.json(
-                { error: 'Only admins can update configuration' },
-                { status: 403 }
-            );
+        // Ensure encryption is initialized
+        if (!Encryption.isInitialized()) {
+            Encryption.initialize();
         }
 
         const config = await req.json();
@@ -27,31 +27,71 @@ export async function POST(req: Request) {
         const db = mongoClient.db("boarding-sky");
         const configCollection = db.collection('config');
 
-        // Remove _id from config if it exists
-        const { _id, ...configWithoutId } = config;
+        // Extract sensitive data before storing in main config
+        const { providers, stripe, ...mainConfig } = config;
 
-        // Find existing config
-        const existingConfig = await configCollection.findOne({});
-
-        if (existingConfig) {
-            // Update existing configuration
-            await configCollection.updateOne(
-                { _id: existingConfig._id },
-                { 
-                    $set: {
-                        ...configWithoutId,
-                        updatedAt: new Date()
-                    }
-                }
-            );
-        } else {
-            // Create new configuration
-            await configCollection.insertOne({
-                ...configWithoutId,
-                createdAt: new Date(),
-                updatedAt: new Date()
+        // Store provider configurations securely
+        if (providers?.amadeus) {
+            await ApiKeyManager.storeProviderKeys({
+                id: 'amadeus',
+                name: 'Amadeus',
+                type: 'amadeus',
+                isActive: mainConfig.flight.providers.includes('amadeus'),
+                baseUrl: process.env.AMADEUS_BASE_URL || 'https://api.amadeus.com',
+                apiKey: providers.amadeus.clientId,
+                apiSecret: providers.amadeus.clientSecret
             });
         }
+
+        if (providers?.skyscanner) {
+            await ApiKeyManager.storeProviderKeys({
+                id: 'skyscanner',
+                name: 'Skyscanner',
+                type: 'skyscanner',
+                isActive: mainConfig.flight.providers.includes('skyscanner') || 
+                         mainConfig.car.providers.includes('skyscanner'),
+                baseUrl: process.env.SKYSCANNER_BASE_URL || 'https://api.skyscanner.net',
+                apiKey: providers.skyscanner.apiKey
+            });
+        }
+
+        if (providers?.serp) {
+            await ApiKeyManager.storeProviderKeys({
+                id: 'serp',
+                name: 'SERP API',
+                type: 'serp',
+                isActive: mainConfig.hotel.providers.includes('serp'),
+                baseUrl: process.env.SERP_BASE_URL || 'https://serpapi.com',
+                apiKey: providers.serp.apiKey
+            });
+        }
+
+        // Store Stripe configuration securely
+        if (stripe) {
+            await ApiKeyManager.storeProviderKeys({
+                id: 'stripe',
+                name: 'Stripe',
+                type: 'custom',
+                isActive: true,
+                baseUrl: 'https://api.stripe.com',
+                apiKey: stripe.secretKey,
+                apiSecret: stripe.webhookSecret
+            });
+        }
+
+        // Store main configuration without sensitive data
+        const { _id, ...configWithoutId } = mainConfig;
+        
+        await configCollection.updateOne(
+            { _id: _id ? new ObjectId(_id) : new ObjectId() },
+            { 
+                $set: {
+                    ...configWithoutId,
+                    updatedAt: new Date()
+                }
+            },
+            { upsert: true }
+        );
 
         return NextResponse.json({
             success: true,

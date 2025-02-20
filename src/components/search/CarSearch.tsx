@@ -51,6 +51,7 @@ const CarSearch = () => {
     const [dropOffTime, setDropOffTime] = useState(searchParams.get('dropOffTime') || '10:00')
     const [pickUpLocation, setPickUpLocation] = useState(searchParams.get('pickUpLocation') || '')
     const [dropOffLocation, setDropOffLocation] = useState(searchParams.get('dropOffLocation') || '')
+    const [market, setMarket] = useState(searchParams.get('market') || 'us')
 
     const handleSearch = () => {
         if (!dates.from || !dates.to || !pickUpLocation) {
@@ -59,17 +60,20 @@ const CarSearch = () => {
 
         const pickUpDate = format(dates.from, 'yyyy-MM-dd')
         const dropOffDate = format(dates.to, 'yyyy-MM-dd')
+        
+        const formatedPickUpLocation = pickUpLocation.split(' - ')[0]
+        const formatedDropOffLocation = dropOffLocation ? dropOffLocation.split(' - ')[0] : formatedPickUpLocation
 
         const params = new URLSearchParams({
             pickUpDate,
             dropOffDate,
             pickUpTime,
             dropOffTime,
-            pickUpLocation,
-            ...(dropOffLocation && { dropOffLocation }),
+            market,
+            pickUpLocation: formatedPickUpLocation,
+            ...(dropOffLocation && { dropOffLocation: formatedDropOffLocation }),
             page: '1'
         })
-
         router.push(`/car/search?${params.toString()}`)
     }
 
@@ -86,8 +90,11 @@ const CarSearch = () => {
                     <CitySearchPopup
                         label="Pickup location"
                         placeholder="Enter city or airport"
-                        type="city"
-                        onCitySelect={(value) => setPickUpLocation(value)}
+                        type="car"
+                        onCitySelect={(value) => {
+                            setPickUpLocation(value)
+                            setMarket(value.split(' - ')[2].toUpperCase())
+                        }}
                         onChange={(value) => setPickUpLocation(value)}
                     />
                 </div>
@@ -96,7 +103,7 @@ const CarSearch = () => {
                     <CitySearchPopup
                         label="Drop-off location"
                         placeholder="Same as pickup"
-                        type="city"
+                        type="car"
                         onCitySelect={(value) => setDropOffLocation(value)}
                         onChange={(value) => setDropOffLocation(value)}
                     />

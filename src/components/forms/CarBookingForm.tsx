@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
+import Link from "next/link"
 
 interface DriverFormProps {
   onFormChange: (isValid: boolean, formData: any) => void
@@ -259,7 +260,8 @@ export function CarBookingForm({ onFormChange }: DriverFormProps) {
             />
             <Label htmlFor="terms" className="text-sm">
               I confirm that I am at least 21 years old and have held my license for at least one year. 
-              I have reviewed and accept the rental terms and conditions, including the cancellation policy.
+              I have reviewed and accept <Link href="/terms-and-conditions" target="_blank" 
+              className="underline text-first hover:text-second">the rental terms and conditions, including the cancellation policy.</Link>
             </Label>
           </div>
         </CardContent>

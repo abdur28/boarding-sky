@@ -7,7 +7,7 @@ export type Provider = {
   baseUrl: string;
   token?: string;
   expiresIn?: number;
-  type: 'amadeus' | 'sabre' | 'travelport' | 'custom';
+  type: 'amadeus' | 'skyscanner' | 'serp' | 'direct' | 'custom';
 }
 
 export interface ProviderTokens {
@@ -433,4 +433,74 @@ export interface CarOffer {
 export interface SkyscannerCarOffer extends CarOffer {
   provider: 'skyscanner';
   skyscanner_session_token?: string;
+}
+
+
+export type BookingType = 'car' | 'flight' | 'hotel' | 'tour';
+export type BookingStatus = 'confirmed' | 'pending' | 'cancelled' | 'completed';
+
+export interface CustomerDetails {
+    name: string;
+    email: string;
+    phone: string;
+}
+
+export interface UserDetails {
+    _id: string;
+    name: string;
+    email: string;
+    profilePicture: string;
+}
+
+export interface BaseBooking {
+    bookingId: string;
+    stripeSessionId: string;
+    bookingType: BookingType;
+    provider: string;
+    user: UserDetails;
+    customer: CustomerDetails;
+    paymentStatus: 'paid' | 'pending' | 'failed' | 'refunded';
+    amount: number;
+    actualAmount: number;
+    currency: string;
+    createdAt: Date;
+    updatedAt: Date;
+    status: BookingStatus;
+}
+
+export interface Receipt {
+    receiptId: string;
+    bookingId: string;
+    bookingType: BookingType;
+    transactionDate: Date;
+    customer: CustomerDetails;
+    user: UserDetails;
+    paymentDetails: {
+        amount: number;
+        actualAmount: number;
+        currency: string;
+        paymentMethod: string;
+        transactionId: string;
+    };
+    itemDetails: {
+        name: string;
+        description: string;
+        quantity: number;
+        unitPrice: number;
+        protection?: {
+            included: boolean;
+            amount: number;
+        };
+    };
+    provider: string;
+    status: 'paid' | 'refunded' | 'failed';
+}
+
+
+export interface City {
+  name: string;
+  iataCode: string;
+  countryCode: string;
+  cityName: string;
+  cityCode: string;
 }

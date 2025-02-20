@@ -20,6 +20,7 @@ interface CarBookingPageProps {
     dropoffTime: string
     pickupLocation: string
     dropoffLocation: string
+    market: string
     provider: string
 }
 
@@ -31,6 +32,7 @@ const CarBookingPage = ({
     dropoffLocation,
     pickupTime,
     dropoffTime,
+    market,
     provider
 }: CarBookingPageProps) => {
     const router = useRouter()
@@ -60,10 +62,11 @@ const CarBookingPage = ({
                 dropOffDate: dropoffDate,
                 pickUpTime: pickupTime,
                 dropOffTime: dropoffTime,
-                provider
+                provider,
+                market
             })
         }
-    }, [offerId, pickupLocation, dropoffLocation, pickupDate, dropoffDate, pickupTime, dropoffTime, provider])
+    }, [offerId, pickupLocation, dropoffLocation, pickupDate, dropoffDate, pickupTime, dropoffTime, provider, market])
 
 
     

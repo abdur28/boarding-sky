@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useAmadeus } from '@/hooks/useAmadeus'
 import { Plane, MapPin } from 'lucide-react'
 
 
@@ -17,24 +16,40 @@ export function CitySearchPopup({ label, placeholder, type, onCitySelect, onChan
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [suggestions, setSuggestions] = useState<any>([])
+  const [isLoading, setIsLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const popupRef = useRef<HTMLDivElement>(null)
 
-  const { citySearch, isLoading, airports } = useAmadeus();
 
   useEffect(() => {
+    const autoComplete = async (searchTerm: string) => {
+      try {
+        setIsLoading(true)
+        const response = await fetch(`/api/autocomplete`, {
+          cache: "no-store",
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: JSON.stringify({ query: searchTerm }),
+        })
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        const data = await response.json()
+        return data.data
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
     if (searchTerm !== "") {
-      citySearch(searchTerm)
+      autoComplete(searchTerm).then(data => {
+        setSuggestions(data)
+      })
     }
   }, [searchTerm])
-
-  useEffect(() => {
-    if (airports && airports.length > 0) {
-      setSuggestions(airports)
-    } else {
-      setSuggestions([])
-    }
-  }, [airports])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -89,15 +104,15 @@ export function CitySearchPopup({ label, placeholder, type, onCitySelect, onChan
                   key={index}
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer "
                   onClick={() => handleCitySelect(
-                    type === 'city' ? `${city.cityName} - ${city.iataCode}` :
+                    type === 'city' ? `${city.cityName} - ${city.iataCode}` : type === 'car' ? `${city.cityName} - ${city.iataCode} - ${city.countryCode}` :
                     `${city.cityName} (${city.iataCode} - ${city.name})`)
                   }
                 >
-                  <div className="flex items-center  gap-3">
-                    {type === 'city' ? <MapPin className="w-5 h-5" /> : <Plane className="w-5 h-5" fill='black' />}
+                  <div className="flex items-center gap-3">
+                    {type === 'city' || type === 'car' ? <MapPin className="w-5 h-5 flex-shrink-0" /> : <Plane className="w-5 h-5 flex-shrink-0" fill='black' />}
                     <div className="flex flex-col">
-                      <span className="text-sm">{type === 'city' ? `${city.cityName}` : `${city.cityName} (${city.iataCode} - ${city.name})`}</span>
-                      <span className="text-xs text-muted-foreground">{city.cityName}, {city.stateCode && city.stateCode + ', '} {city.countryCode}</span>
+                      <span className="text-sm">{type === 'city' || type === 'car' ? `${city.cityName}` : `${city.cityName} (${city.iataCode} - ${city.name})`}</span>
+                      <span className="text-xs text-muted-foreground">{city.cityName}, {city.cityCode && city.cityCode + ', '} {city.countryCode}</span>
                     </div>
                   </div>
                 </li>

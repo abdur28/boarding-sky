@@ -1,69 +1,11 @@
-import { stripe } from "@/lib/stripe";
+// app/api/webhook/route.ts
+import { getStripe, getStripeWebhookSecret } from "@/lib/stripe";
 import client from "@/lib/mongodb";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import mongoose from "mongoose";
-
-type BookingType = 'car' | 'flight' | 'hotel' | 'tour';
-type BookingStatus = 'confirmed' | 'pending' | 'cancelled' | 'completed';
-
-interface CustomerDetails {
-    name: string;
-    email: string;
-    phone: string;
-}
-
-interface UserDetails {
-    _id: string;
-    name: string;
-    email: string;
-    profilePicture: string;
-}
-
-interface BaseBooking {
-    bookingId: string;
-    stripeSessionId: string;
-    bookingType: BookingType;
-    provider: string;
-    user: UserDetails;
-    customer: CustomerDetails;
-    paymentStatus: 'paid' | 'pending' | 'failed' | 'refunded';
-    amount: number;
-    actualAmount: number;
-    currency: string;
-    createdAt: Date;
-    updatedAt: Date;
-    status: BookingStatus;
-}
-
-interface Receipt {
-    receiptId: string;
-    bookingId: string;
-    bookingType: BookingType;
-    transactionDate: Date;
-    customer: CustomerDetails;
-    user: UserDetails;
-    paymentDetails: {
-        amount: number;
-        actualAmount: number;
-        currency: string;
-        paymentMethod: string;
-        transactionId: string;
-    };
-    itemDetails: {
-        name: string;
-        description: string;
-        quantity: number;
-        unitPrice: number;
-        protection?: {
-            included: boolean;
-            amount: number;
-        };
-    };
-    provider: string;
-    status: 'paid' | 'refunded' | 'failed';
-}
+import { BaseBooking, BookingType, CustomerDetails, Receipt, UserDetails } from "@/types";
 
 async function getUserDetails(userId: string): Promise<UserDetails | null> {
     const mongoClient = await client;
@@ -93,6 +35,7 @@ async function getUserDetails(userId: string): Promise<UserDetails | null> {
 }
 
 async function getLineItems(sessionId: string) {
+    const stripe = await getStripe();
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
         expand: ['line_items']
     });
@@ -220,21 +163,23 @@ async function handleDatabaseOperation(operation: () => Promise<any>) {
 export async function POST(req: Request) {
     const body = await req.text();
     const headersList = await headers();
-    const signature = headersList.get("Stripe-Signature") as string;
+    const signature = headersList.get("Stripe-Signature");
 
-    if (!signature || !process.env.STRIPE_WEBHOOK_SECRET) {
-        console.error('Missing required configuration');
+    if (!signature) {
         return NextResponse.json(
-            { error: 'Configuration error' },
+            { error: 'Missing signature' },
             { status: 400 }
         );
     }
 
     try {
+        const stripe = await getStripe();
+        const webhookSecret = await getStripeWebhookSecret();
+
         const event = stripe.webhooks.constructEvent(
             body,
             signature,
-            process.env.STRIPE_WEBHOOK_SECRET
+            webhookSecret
         );
 
         if (event.type === 'checkout.session.completed') {

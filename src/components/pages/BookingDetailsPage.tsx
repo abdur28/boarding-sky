@@ -516,7 +516,7 @@ const BookingDetailsPage = ({ id }: { id: string }) => {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <div className="text-sm font-medium text-gray-500">Departure Date</div>
-                                            <div className="text-sm mt-1">{formatDate(details.departure)}</div>
+                                            <div className="text-sm mt-1">{details.departure}</div>
                                         </div>
                                         <div>
                                             <div className="text-sm font-medium text-gray-500">Total Participants</div>

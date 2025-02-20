@@ -6,7 +6,7 @@ export default async function BookingPage({
 }: { 
   searchParams: any
 }) {
-  const { offerId, pickupDate, dropoffDate, pickupLocation, dropoffLocation, pickupTime, dropoffTime, providerId } = await searchParams
+  const { offerId, pickupDate, dropoffDate, pickupLocation, dropoffLocation, pickupTime, dropoffTime, providerId, market } = await searchParams
   return (
     <div className="w-full h-full flex flex-col justify-center items-center">
       <Header title="Car Rental Booking" />
@@ -19,6 +19,7 @@ export default async function BookingPage({
         pickupTime={pickupTime}
         dropoffTime={dropoffTime}
         provider={providerId}
+        market={market}
       />
     </div>
   )

@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { Loader2, User2 } from "lucide-react";
+import { useServices } from "@/hooks/useServices";
 
 const variants = {
     open: {
@@ -41,47 +42,58 @@ const linkVariants = {
 }
 
 const NavMobile = ({ setOpen, open }: { setOpen: React.Dispatch<React.SetStateAction<boolean>>; open: boolean }) => {
-    const [drop, setDrop] = useState('')
-    const links = [
-        {
-            name: "Hotels",
-            link: "/hotels",
-        },
-        {
-            name: "Flight",
-            link: "/flight",
-        },
-        {
-            name: "Car",
-            link: "/car",
-        },
-        {
-            name: "Tour",
-            link: "/tour",
-        },
-        {
-            name: "Blog",
-            link: "/blog",
-        },
-        {
-            name: "Pages", 
-            link: "",
-            subItems: [
-                {
-                    name: "About",
-                    link: "/about",
-                },
-                {
-                    name: "Contact",
-                    link: "/contact",
-                },
-                {
-                    name: "Privacy Policy",
-                    link: "/privacy-policy",
-                },
-            ]
-        },
-    ]
+    const [drop, setDrop] = useState('');
+    const { services, loading } = useServices();
+  
+    const baseLinks = [
+      {
+        name: "Hotels",
+        link: "/hotels",
+        enabled: services.hotel
+      },
+      {
+        name: "Flight",
+        link: "/flight",
+        enabled: services.flight
+      },
+      {
+        name: "Car",
+        link: "/car",
+        enabled: services.car
+      },
+      {
+        name: "Tour",
+        link: "/tour",
+        alwaysShow: true
+      },
+      {
+        name: "Blog",
+        link: "/blog",
+        alwaysShow: true
+      },
+      {
+        name: "Pages",
+        link: "",
+        alwaysShow: true,
+        subItems: [
+          {
+            name: "About",
+            link: "/about",
+          },
+          {
+            name: "Contact",
+            link: "/contact",
+          },
+          {
+            name: "Privacy Policy",
+            link: "/privacy-policy",
+          },
+        ]
+      },
+    ];
+  
+    // Filter links based on service status
+    const links = baseLinks.filter(link => link.alwaysShow || link.enabled);
 
     return (
         <motion.div 

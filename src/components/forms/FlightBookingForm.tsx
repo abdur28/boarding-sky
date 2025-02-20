@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
+import Link from "next/link"
 
 interface PassengerInfo {
   type: 'adult' | 'child' | 'infant'
@@ -279,7 +280,8 @@ export function FlightBookingForm({ onFormChange, passengerTypes }: FlightBookin
             />
             <Label htmlFor="terms" className="text-sm">
               I confirm that all passenger information is correct and matches their passport exactly. 
-              I have reviewed and accept the booking terms and conditions, including the fare rules and cancellation policy.
+              I have reviewed and accept the booking <Link href="/terms-and-conditions" target="_blank" 
+              className="underline text-first hover:text-second">terms and conditions, including the fare rules and cancellation policy.</Link>
             </Label>
           </div>
         </CardContent>

@@ -1,22 +1,26 @@
 import { NextResponse } from "next/server";
 import { unstable_noStore as noStore } from "next/cache";
 import { FareDetail, FlightOffer, FlightSegment, Itinerary } from "@/types";
+import { ApiKeyManager } from "@/lib/api-keys";
+import { ServiceConfig } from "@/lib/service-config";
 
 export const revalidate = 0;
-export const dynamic = 'force-dynamic'
-
-// Add these from your environment variables
-const CLIENT_ID = process.env.AMADEUS_CLIENT_ID;
-const CLIENT_SECRET = process.env.AMADEUS_CLIENT_SECRET;
+export const dynamic = 'force-dynamic';
 
 async function getAmadeusToken() {
     try {
+        // Get Amadeus credentials from secure storage
+        const provider = await ApiKeyManager.getProvider('amadeus');
+        if (!provider?.apiKey || !provider?.apiSecret) {
+            throw new Error('Amadeus credentials not configured');
+        }
+
         const response = await fetch('https://test.api.amadeus.com/v1/security/oauth2/token', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: `grant_type=client_credentials&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}`,
+            body: `grant_type=client_credentials&client_id=${provider.apiKey}&client_secret=${provider.apiSecret}`,
         });
 
         if (!response.ok) {
@@ -34,6 +38,23 @@ async function getAmadeusToken() {
 export const POST = async (req: Request) => {
     noStore();
     try {
+        // Check if flight service and Amadeus provider are enabled
+        const isServiceEnabled = await ServiceConfig.getServiceStatus('flight');
+        if (!isServiceEnabled) {
+            return NextResponse.json(
+                { error: 'Flight service is currently disabled' },
+                { status: 503 }
+            );
+        }
+
+        const isProviderEnabled = await ServiceConfig.isProviderEnabled('flight', 'amadeus');
+        if (!isProviderEnabled) {
+            return NextResponse.json(
+                { error: 'Amadeus provider is not available' },
+                { status: 503 }
+            );
+        }
+
         const { 
             origin, 
             destination, 
@@ -153,4 +174,4 @@ export const POST = async (req: Request) => {
             { status: 500 }
         );
     }
-}
+};

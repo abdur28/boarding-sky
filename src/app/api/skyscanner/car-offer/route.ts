@@ -74,7 +74,7 @@
 //             pickUpTime,      // Added
 //             dropOffTime,     // Added
 //             driverAge = 30,
-//             market = 'UK',
+//             market,
 //             locale = 'en-GB',
 //             currency = 'GBP',
 //         } = await req.json();

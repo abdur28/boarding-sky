@@ -14,6 +14,7 @@ import {
     SelectValue 
 } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
+import Link from "next/link"
 
 const formSchema = z.object({
     firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -208,21 +209,21 @@ export function TourBookingForm({ onFormChange }: TourBookingFormProps) {
                                 className="text-sm text-muted-foreground leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                             >
                                 By checking this box, I agree to the{" "}
-                                <a 
-                                    href="/terms" 
-                                    className="text-primary underline"
+                                <Link 
+                                    href="/terms-and-conditions" 
+                                    className="text-first hover:text-second underline"
                                     target="_blank"
                                 >
                                     Terms & Conditions
-                                </a>
+                                </Link>
                                 {" "}and{" "}
-                                <a 
-                                    href="/privacy" 
-                                    className="text-primary underline"
+                                <Link
+                                    href="/privacy-policy" 
+                                    className="text-first hover:text-second underline"
                                     target="_blank"
                                 >
                                     Privacy Policy
-                                </a>
+                                </Link>
                             </Label>
                             {errors.agreeToTerms && (
                                 <p className="text-sm text-red-500">{errors.agreeToTerms}</p>

@@ -46,15 +46,15 @@ export function CarCard({
   }
 
   return (
-    <Card className="w-full max-w-6xl overflow-hidden">
+    <Card className="w-full max-w-6xl md:h-[300px] overflow-hidden">
       <CardContent className="p-0">
         <div className="flex flex-col md:flex-row gap-4 h-full w-full justify-center items-center">
-          <div className="w-full md:w-[400px] md:h-[250px] h-[250px]">
+          <div className="w-full md:w-[400px] md:h-[300px] h-[250px]">
             <Carousel className="w-full h-full flex justify-center items-center overflow-hidden">
               <CarouselContent>
                 {offer.images.map((image, index) => (
                   <CarouselItem key={index}>
-                    <div className="h-full w-full">
+                    <div className="h-full  w-full">
                       <img
                         src={image.url}
                         alt={image.alt || `${offer.name} - Image ${index + 1}`}

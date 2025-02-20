@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import Link from "next/link"
 
 interface GuestInfo {
   firstName: string
@@ -238,8 +239,8 @@ export function HotelBookingForm({ onFormChange, numberOfRooms, numberOfGuests }
               onCheckedChange={(checked) => handleTermsChange(checked as boolean)} 
             />
             <Label htmlFor="terms" className="text-sm">
-              I confirm that I am at least 18 years old and I have read and accept the booking terms and 
-              conditions, including the cancellation and no-show policy. I am booking for all guests listed 
+              I confirm that I am at least 18 years old and I have read and accept the booking <Link href="/terms-and-conditions" target="_blank" 
+              className="underline text-first hover:text-second">terms and conditions, including the cancellation and no-show policy.</Link> I am booking for all guests listed 
               and have their permission to share their personal information.
             </Label>
           </div>

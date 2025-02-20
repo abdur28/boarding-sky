@@ -10,7 +10,6 @@ import {
   CardContent 
 } from "@/components/ui/card";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import { useDashboard } from '@/hooks/useDashboard';
 
 interface ConfigState {
   flight: {
@@ -85,6 +84,7 @@ const PasswordInput = ({ id, label, value, onChange }: PasswordInputProps) => {
 const Configuration = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [config, setConfig] = useState<ConfigState>({
     flight: {
       enabled: false,
@@ -135,8 +135,46 @@ const Configuration = () => {
     fetchConfig();
   }, []);
 
+  const validateConfig = (config: ConfigState) => {
+    if (
+      config.flight.enabled &&
+      config.flight.providers.length === 0
+    ) {
+      setError('Please select at least one flight provider');
+      return false;
+    }
+    if (
+      config.hotel.enabled &&
+      config.hotel.providers.length === 0
+    ) {
+      setError('Please select at least one hotel provider');
+      return false;
+    }
+    if (
+      config.car.enabled &&
+      config.car.providers.length === 0
+    ) {
+      setError('Please select at least one car provider');
+      return false;
+    }
+    if (
+      config.stripe.secretKey === '' ||
+      config.stripe.publishableKey === '' ||
+      config.stripe.webhookSecret === ''
+    ) {
+      setError('Please fill in all Stripe credentials');
+      return false;
+    }
+    return true;
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
+    const isValid = validateConfig(config);
+    if (!isValid) {
+      setIsSaving(false);
+      return;
+    }
     try {
       const response = await fetch('/api/actions/update-config', {
         method: 'POST',
@@ -186,20 +224,23 @@ const Configuration = () => {
       <div className="sticky top-0 z-50 w-full bg-white border-b border-border/40 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <h1 className="text-2xl font-semibold">Configuration</h1>
-          <Button 
-            onClick={handleSave} 
-            disabled={isSaving}
-            className="w-24"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving
-              </>
-            ) : (
-              'Save'
-            )}
-          </Button>
+          <div className="flex flex-col items-end gap-2">
+            <Button 
+              onClick={handleSave} 
+              disabled={isSaving}
+              className="w-24"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving
+                </>
+              ) : (
+                'Save'
+              )}
+            </Button>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+          </div>
         </div>
       </div>
 

@@ -57,19 +57,20 @@ export function HotelCard({
   };
 
   return (
-    <Card className="w-full max-w-6xl overflow-hidden">
+    <Card className="w-full max-w-6xl md:h-[370px] overflow-hidden">
       <CardContent className="p-0">
-        <div className="flex flex-col md:flex-row gap-4 h-full w-full justify-center items-center">
-          <div className="w-full md:w-[500px] md:h-[300px] h-[300px]">
-            <Carousel className="w-full h-full flex justify-center items-center overflow-hidden">
+        <div className="flex flex-col md:flex-row">
+          {/* Image Section - Edge to edge */}
+          <div className="relative w-full md:w-2/5 h-[370px]">
+            <Carousel className="w-full h-full">
               <CarouselContent>
                 {offer.images.map((image, index) => (
                   <CarouselItem key={index}>
-                    <div className="h-full w-full">
+                    <div className="relative w-full h-[370px]">
                       <img
                         src={image.thumbnail}
                         alt={`${offer.name} - Image ${index + 1}`}
-                        className="object-cover w-full h-full"
+                        className="absolute inset-0 object-cover w-full h-full"
                       />
                     </div>
                   </CarouselItem>
@@ -80,16 +81,17 @@ export function HotelCard({
             </Carousel>
           </div>
 
-          <div className="flex flex-col p-4">
+          {/* Content Section */}
+          <div className="flex-1  p-3">
             <div className="space-y-4">
               <div>
-                <h3 className="text-xl font-semibold">{offer.name}</h3>
-                <p className="text-blue-600">{offer.location.address}</p>
+                <h3 className="text-lg font-semibold">{offer.name}</h3>
+                <p className="text-blue-600 text-sm">{offer.location.address}</p>
               </div>
 
               <div className="flex flex-wrap gap-2">
                 {offer.amenities.slice(0, 3).map((amenity, index) => (
-                  <Badge key={index} variant="secondary" className="bg-gray-100 text-gray-600 hover:bg-gray-100">
+                  <Badge key={index} variant="secondary" className="bg-gray-100 text-xs text-gray-600 hover:bg-gray-100">
                     {amenity}
                   </Badge>
                 ))}
@@ -100,53 +102,53 @@ export function HotelCard({
                 )}
               </div>
 
-              <p className="text-sm text-gray-600">{offer.description}</p>
+              <p className="text-xs text-gray-600">{offer.description.length > 100 ? offer.description.slice(0, 100) + '...' : offer.description }</p>
 
               {offer.refundable && (
                 <div className="space-y-1">
-                  <p className="text-green-600 font-medium">Fully refundable</p>
-                  <p className="text-sm text-gray-600">Reserve now, pay later</p>
+                  <p className="text-green-600 text-sm font-medium">Fully refundable</p>
+                  <p className="text-xs text-gray-600">Reserve now, pay later</p>
                 </div>
               )}
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <Badge className="bg-green-600 hover:bg-green-600 p-2">
+                  <Badge className="bg-green-600 hover:bg-green-600 p-1 ">
                     {offer.rating.overall.toFixed(1)}
                   </Badge>
                   <div>
-                    <span className="font-medium">
+                    <span className="font-medium text-sm">
                       {offer.rating.overall >= 9 ? 'Exceptional' :
                        offer.rating.overall >= 8 ? 'Excellent' :
                        offer.rating.overall >= 7 ? 'Very Good' :
                        offer.rating.overall >= 6 ? 'Good' : 'Fair'}
                     </span>
-                    <p className="text-sm text-gray-600">{offer.rating.totalReviews} reviews</p>
+                    <p className="text-xs text-gray-600">{offer.rating.totalReviews} reviews</p>
                   </div>
                 </div>
 
                 <div className="ml-auto text-right">
                   {offer.price.discount && (
-                    <Badge variant="secondary" className="mb-1 bg-slate-900 text-white hover:bg-slate-900">
+                    <Badge variant="secondary" className="mb-1 bg-slate-900 text-white text-xs hover:bg-slate-900">
                       {offer.price.discount.label} ${offer.price.discount.amount} off
                     </Badge>
                   )}
                   <div className="space-y-1">
                     <div className="flex items-center justify-end gap-2">
                       {offer.price.original && (
-                        <span className="text-sm line-through">
+                        <span className="text-xs line-through">
                           ${offer.price.original}
                         </span>
                       )}
-                      <span className="text-2xl font-bold">
+                      <span className="text-xl font-bold">
                         ${offer.price.current}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-xs text-gray-600">
                       {offer.price.includesTaxes ? 'includes taxes & fees' : 'plus taxes & fees'}
                     </p>
                   </div>
-                  <div className='mt-4'>
+                  <div className="mt-2">
                     <Button onClick={handleBooking}>Book Now</Button>
                   </div>
                 </div>

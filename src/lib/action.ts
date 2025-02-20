@@ -7,6 +7,7 @@ import { clerkClient } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { unstable_noStore as noStore } from "next/cache";
 import { randomInt, randomUUID } from "crypto";
+import { sanitizeHtml } from "./utils";
 
 async function getCollection(collectionName: string) {
   const mongoClient = await client;
@@ -327,9 +328,25 @@ export async function updateDestinations(formData: FormData) {
 
 
 export async function fetchPrivacyPolicy(): Promise<string> {
-  const collection = await getCollection('policy');
-  const data = await collection.findOne({ type: 'privacy-policy' });
-  return data?.content || '';
+  try {
+    const collection = await getCollection('policy');
+    const data = await collection.findOne({ type: 'privacy-policy' });
+    return sanitizeHtml(data?.content || '');
+  } catch (error) {
+    console.error('Error fetching privacy policy:', error);
+    return '';
+  }
+}
+
+export async function fetchTermsAndConditions(): Promise<string> {
+  try {
+    const collection = await getCollection('policy');
+    const data = await collection.findOne({ type: 'terms-and-conditions' });
+    return sanitizeHtml(data?.content || '');
+  } catch (error) {
+    console.error('Error fetching terms and conditions:', error);
+    return '';
+  }
 }
 
 export async function updatePrivacyPolicy(content: string): Promise<void> {
@@ -341,11 +358,6 @@ export async function updatePrivacyPolicy(content: string): Promise<void> {
   );
 }
 
-export async function fetchTermsAndConditions(): Promise<string> {
-  const collection = await getCollection('policy');
-  const data = await collection.findOne({ type: 'terms-and-conditions' });
-  return data?.content || '';
-}
 
 export async function updateTermsAndConditions(content: string): Promise<void> {
   const collection = await getCollection('policy');

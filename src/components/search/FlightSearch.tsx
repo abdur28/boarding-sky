@@ -95,13 +95,13 @@ export default function Component({isSearch = false}:{isSearch: boolean}) {
 
   return (
           <Tabs defaultValue="flights" className="w-full">
-            {!isSearch && (
+            {/* {!isSearch && (
             <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="flights">Flight</TabsTrigger>
               <TabsTrigger value="manage-booking">Manage Booking</TabsTrigger>
               <TabsTrigger value="flight-status">Flight Status</TabsTrigger>
             </TabsList>
-            )}
+            )} */}
             <TabsContent value="flights">
               <div className="space-y-6">
                 <RadioGroup value={tripType} onValueChange={handleTripTypeChange} className="flex gap-4">
@@ -113,10 +113,10 @@ export default function Component({isSearch = false}:{isSearch: boolean}) {
                     <RadioGroupItem value="roundtrip" id="roundtrip" />
                     <Label htmlFor="roundtrip">Round-trip</Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  {/* <div className="flex items-center space-x-2">
                     <RadioGroupItem value="multicity" id="multicity" />
                     <Label htmlFor="multicity">Multi-city</Label>
-                  </div>
+                  </div> */}
                 </RadioGroup>
                 {tripType === 'multicity' ? (
                   <div className="">
