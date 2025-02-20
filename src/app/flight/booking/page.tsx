@@ -1,8 +1,6 @@
 // app/flight/booking/page.tsx
 import Header from '@/components/Header'
 import FlightBookingPage from '@/components/pages/FlightBookingPage'
-import { FlightOffer } from '@/types'
-import { off } from 'process'
 
 interface BookingSearchParams {
   offerId: string
@@ -90,7 +88,7 @@ async function getFlightOffer(params: BookingSearchParams) {
 export default async function BookingPage({ 
   searchParams 
 }: { 
-  searchParams: BookingSearchParams 
+  searchParams: any 
 }) {
   const params = await searchParams
   

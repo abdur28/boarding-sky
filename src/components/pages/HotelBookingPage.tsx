@@ -17,6 +17,7 @@ interface HotelBookingPageProps {
     checkIn: string
     checkOut: string
     adults: number
+    offerId?: string
 }
 
 interface BookingResponse {
@@ -30,6 +31,7 @@ const HotelBookingPage = ({
     checkIn,
     checkOut,
     adults,
+    offerId
 }: HotelBookingPageProps) => {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
@@ -56,6 +58,7 @@ const HotelBookingPage = ({
                         checkIn,
                         checkOut,
                         adults,
+                        offerId
                     }),
                 })
 
