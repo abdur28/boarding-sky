@@ -31,88 +31,88 @@ const PromoCard = ({
   </Card>
 )
 
-const FeaturedLocation = ({
-  image,
-  city,
-  country,
-  price,
-  cars
-}: {
-  image: string
-  city: string
-  country: string
-  price: number
-  cars: number
-}) => (
-  <Card className="group cursor-pointer overflow-hidden">
-    <CardContent className="p-0 relative">
-      <div className="relative h-48 overflow-hidden">
-        <img
-          src={image}
-          alt={city}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-      </div>
-      <div className="absolute bottom-0 p-4 text-white">
-        <h3 className="text-lg font-semibold">{city}</h3>
-        <p className="text-sm opacity-90">{country}</p>
-        <div className="mt-2 flex items-center gap-2">
-          <Badge className="bg-white/20 hover:bg-white/30">
-            From ${price}/day
-          </Badge>
-          <Badge variant="outline" className="text-white border-white/40">
-            {cars} cars available
-          </Badge>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-)
+// const FeaturedLocation = ({
+//   image,
+//   city,
+//   country,
+//   price,
+//   cars
+// }: {
+//   image: string
+//   city: string
+//   country: string
+//   price: number
+//   cars: number
+// }) => (
+//   <Card className="group cursor-pointer overflow-hidden">
+//     <CardContent className="p-0 relative">
+//       <div className="relative h-48 overflow-hidden">
+//         <img
+//           src={image}
+//           alt={city}
+//           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+//         />
+//         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+//       </div>
+//       <div className="absolute bottom-0 p-4 text-white">
+//         <h3 className="text-lg font-semibold">{city}</h3>
+//         <p className="text-sm opacity-90">{country}</p>
+//         <div className="mt-2 flex items-center gap-2">
+//           <Badge className="bg-white/20 hover:bg-white/30">
+//             From ${price}/day
+//           </Badge>
+//           <Badge variant="outline" className="text-white border-white/40">
+//             {cars} cars available
+//           </Badge>
+//         </div>
+//       </div>
+//     </CardContent>
+//   </Card>
+// )
 
-const SpecialDeal = ({
-  title,
-  description,
-  discount,
-  image,
-  features
-}: {
-  title: string
-  description: string
-  discount: string
-  image: string
-  features: string[]
-}) => (
-  <Card className="overflow-hidden">
-    <CardContent className="p-0">
-      <div className="flex flex-col md:flex-row">
-        <div className="relative md:w-48 h-48 md:h-auto">
-          <img
-            src={image}
-            alt={title}
-            className="w-full h-full object-cover"
-          />
-          <Badge className="absolute top-2 right-2 bg-red-500 text-white">
-            {discount} OFF
-          </Badge>
-        </div>
-        <div className="p-6 flex-1">
-          <h3 className="text-lg font-semibold">{title}</h3>
-          <p className="text-sm text-muted-foreground mt-1">{description}</p>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            {features.map((feature, index) => (
-              <div key={index} className="flex items-center gap-2 text-sm">
-                <BadgeCheck className="w-4 h-4 text-green-500" />
-                <span>{feature}</span>
-              </div>
-            ))}
-          </div>
-          <Button className="mt-4">View Deal</Button>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-)
+// const SpecialDeal = ({
+//   title,
+//   description,
+//   discount,
+//   image,
+//   features
+// }: {
+//   title: string
+//   description: string
+//   discount: string
+//   image: string
+//   features: string[]
+// }) => (
+//   <Card className="overflow-hidden">
+//     <CardContent className="p-0">
+//       <div className="flex flex-col md:flex-row">
+//         <div className="relative md:w-48 h-48 md:h-auto">
+//           <img
+//             src={image}
+//             alt={title}
+//             className="w-full h-full object-cover"
+//           />
+//           <Badge className="absolute top-2 right-2 bg-red-500 text-white">
+//             {discount} OFF
+//           </Badge>
+//         </div>
+//         <div className="p-6 flex-1">
+//           <h3 className="text-lg font-semibold">{title}</h3>
+//           <p className="text-sm text-muted-foreground mt-1">{description}</p>
+//           <div className="mt-4 grid grid-cols-2 gap-2">
+//             {features.map((feature, index) => (
+//               <div key={index} className="flex items-center gap-2 text-sm">
+//                 <BadgeCheck className="w-4 h-4 text-green-500" />
+//                 <span>{feature}</span>
+//               </div>
+//             ))}
+//           </div>
+//           <Button className="mt-4">View Deal</Button>
+//         </div>
+//       </div>
+//     </CardContent>
+//   </Card>
+// )
 
 const CarPage = () => {
   return (

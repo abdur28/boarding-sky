@@ -268,7 +268,7 @@ export default function FlightBookingPage({ flightData, passengerCounts }: Fligh
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="no" id="protection-no" />
                       <Label htmlFor="protection-no" className="font-normal">
-                        No, I'll risk my ${flightData.price.amount?.toFixed(2)} trip
+                        {`No, I'll risk my`} ${flightData.price.amount?.toFixed(2)} trip
                       </Label>
                     </div>
                   </RadioGroup>

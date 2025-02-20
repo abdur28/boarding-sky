@@ -167,7 +167,7 @@ export function CarBookingForm({ onFormChange }: DriverFormProps) {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Driver's License Number*</Label>
+              <Label>{`Driver's License Number*`}</Label>
               <Input 
                 value={formData.licenseNumber}
                 onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
@@ -178,7 +178,7 @@ export function CarBookingForm({ onFormChange }: DriverFormProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Date of birth*</Label>
+              <Label>{`Date of birth*`}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -205,7 +205,7 @@ export function CarBookingForm({ onFormChange }: DriverFormProps) {
               </Popover>
             </div>
             <div className="space-y-2">
-              <Label>License Expiry Date*</Label>
+              <Label>{`License Expiry Date*`}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -242,12 +242,12 @@ export function CarBookingForm({ onFormChange }: DriverFormProps) {
             <AlertTitle>Important Information</AlertTitle>
             <AlertDescription>
               <ul className="list-disc pl-4 space-y-2 text-sm">
-                <li>Valid driver's license required at pickup</li>
-                <li>Minimum age requirements apply</li>
-                <li>Credit card in driver's name required</li>
-                <li>Fuel policy: Return with same level</li>
-                <li>Mileage restrictions may apply</li>
-                <li>Local taxes and fees may apply</li>
+                <li>{`Valid driver's license required at pickup`}</li>
+                <li>{`Minimum age requirements apply`}</li>
+                <li>{`Credit card in driver's name required`}</li>
+                <li>{`Fuel policy: Return with same level`}</li>
+                <li>{`Mileage restrictions may apply`}</li>
+                <li>{`Local taxes and fees may apply`}</li>
               </ul>
             </AlertDescription>
           </Alert>
