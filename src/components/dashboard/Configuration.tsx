@@ -26,7 +26,6 @@ interface ConfigState {
   };
   stripe: {
     secretKey: string;
-    publishableKey: string;
     webhookSecret: string;
   };
   providers: {
@@ -100,7 +99,6 @@ const Configuration = () => {
     },
     stripe: {
       secretKey: '',
-      publishableKey: '',
       webhookSecret: ''
     },
     providers: {
@@ -136,6 +134,7 @@ const Configuration = () => {
   }, []);
 
   const validateConfig = (config: ConfigState) => {
+    setError(null)
     if (
       config.flight.enabled &&
       config.flight.providers.length === 0
@@ -159,7 +158,6 @@ const Configuration = () => {
     }
     if (
       config.stripe.secretKey === '' ||
-      config.stripe.publishableKey === '' ||
       config.stripe.webhookSecret === ''
     ) {
       setError('Please fill in all Stripe credentials');
@@ -456,15 +454,6 @@ const Configuration = () => {
                   onChange={(e) => setConfig(prev => ({
                     ...prev,
                     stripe: { ...prev.stripe, secretKey: e.target.value }
-                  }))}
-                />
-                <PasswordInput
-                  id="stripe-publishable-key"
-                  label="Publishable Key"
-                  value={config.stripe.publishableKey}
-                  onChange={(e) => setConfig(prev => ({
-                    ...prev,
-                    stripe: { ...prev.stripe, publishableKey: e.target.value }
                   }))}
                 />
                 <PasswordInput
