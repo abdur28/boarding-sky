@@ -8,11 +8,60 @@ import { NextResponse } from 'next/server'
 import { unstable_noStore as noStore } from "next/cache";
 import { randomInt, randomUUID } from "crypto";
 import { sanitizeHtml } from "./utils";
+import nodemailer from 'nodemailer';
 
 async function getCollection(collectionName: string) {
   const mongoClient = await client;
   const db = mongoClient.db("boarding-sky");
   return db.collection(collectionName);
+}
+
+export async function sendMail(formData: FormData) {
+  const collection = await getCollection("info");
+  const info = await collection.findOne({});
+
+  if (!info) {
+    return { success: false, error: 'Info not found' };
+  }
+
+  const companyEmail = info.email;
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  });
+  
+  const {
+    name,
+    subject,
+    phone,
+    email,
+    message,
+  } = Object.fromEntries(formData.entries());
+
+  try {
+    const mailOptions = {
+      from: `Boarding Sky <abdurrahmanidris235@gmail.com>`,
+      to: `${companyEmail}`,
+      subject: `${subject}`,
+      html: `
+        <p>Name: ${name}</p>
+        <p>Subject: ${subject}</p>
+        <p>Phone: ${phone}</p>
+        <p>Email: ${email}</p>
+        <p>Message: ${message}</p>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to send email:', error);
+    return { success: false, error };
+  }
 }
 
 export async function updateInfo(formData: FormData) {

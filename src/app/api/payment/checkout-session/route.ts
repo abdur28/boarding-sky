@@ -4,7 +4,6 @@ import { NextResponse } from "next/server";
 import { unstable_noStore as noStore } from "next/cache";
 import { CarOffer, FlightOffer, HotelOffer } from "@/types";
 import { getUser } from "@/lib/data";
-import { ServiceConfig } from "@/lib/service-config";
 
 
 export const dynamic = 'force-dynamic';
