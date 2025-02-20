@@ -218,18 +218,18 @@ export async function POST(req: Request) {
             ],
             images: [
                 {
-                    thumbnail: "/api/placeholder/400/300",
-                    original: "/api/placeholder/1200/900",
+                    thumbnail: "https://images.unsplash.com/photo-1561501900-3701fa6a0864?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    original: "https://images.unsplash.com/photo-1561501900-3701fa6a0864?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                     alt: "Luxury Resort Main View"
                 },
                 {
-                    thumbnail: "/api/placeholder/400/300",
-                    original: "/api/placeholder/1200/900",
+                    thumbnail: "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    original: "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                     alt: "Infinity Pool"
                 },
                 {
-                    thumbnail: "/api/placeholder/400/300",
-                    original: "/api/placeholder/1200/900",
+                    thumbnail: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?q=80&w=3149&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    original: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?q=80&w=3149&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                     alt: "Deluxe Room"
                 }
             ],
@@ -339,8 +339,12 @@ export async function POST(req: Request) {
                     ],
                     images: [
                         {
-                            url: "/api/placeholder/800/600",
+                            url: "https://images.unsplash.com/photo-1561501900-3701fa6a0864?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                             alt: "Deluxe Ocean View Room"
+                        },
+                        {
+                            url: "https://images.unsplash.com/photo-1561501900-3701fa6a0864?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                            alt: "Pool View"
                         }
                     ],
                     price: {
@@ -378,7 +382,7 @@ export async function POST(req: Request) {
                     ],
                     images: [
                         {
-                            url: "/api/placeholder/800/600",
+                            url: "https://images.unsplash.com/photo-1561501900-3701fa6a0864?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                             alt: "Premium Suite"
                         }
                     ],

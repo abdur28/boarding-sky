@@ -254,11 +254,11 @@ const mockCarOffer = (
     brand: 'Toyota',
     images: [
         {
-            url: 'https://example.com/camry1.jpg',
+            url: 'https://rg.ru/uploads/images/2023/03/23/76_352.jpg',
             alt: 'Toyota Camry - Front View'
         },
         {
-            url: 'https://example.com/camry2.jpg',
+            url: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR396wDVxKzjRHnNC7K0LDaYZO9edztZDJxlw&s',
             alt: 'Toyota Camry - Side View'
         }
     ],
@@ -348,7 +348,7 @@ const mockCarOffer = (
     vendor: {
         id: 'hertz',
         name: 'Hertz',
-        logo: 'https://example.com/hertz-logo.png',
+        logo: 'https://d1yjjnpx0p53s8.cloudfront.net/styles/logo-thumbnail/s3/0020/2909/brand.gif?itok=T7bbfcQe',
         rating: 4.5,
         reviewCount: 1250
     },
@@ -356,7 +356,7 @@ const mockCarOffer = (
     agent: {
         id: 'hertz_direct',
         name: 'Hertz',
-        logo: 'https://example.com/hertz-logo.png',
+        logo: 'https://d1yjjnpx0p53s8.cloudfront.net/styles/logo-thumbnail/s3/0020/2909/brand.gif?itok=T7bbfcQe',
         type: 'vendor',
         rating: 4.5,
         reviewCount: 1250

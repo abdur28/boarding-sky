@@ -203,13 +203,13 @@ export async function POST(req: Request) {
                 ],
                 images: [
                     {
-                        thumbnail: "/hero.png",
-                        original: "/hero.png",
+                        thumbnail: "https://images.unsplash.com/photo-1617859047452-8510bcf207fd?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                        original: "https://images.unsplash.com/photo-1617859047452-8510bcf207fd?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                         alt: "Hotel exterior"
                     },
                     {
-                        thumbnail: "/hero.png",
-                        original: "/hero.png",
+                        thumbnail: "https://images.unsplash.com/photo-1561501900-3701fa6a0864?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                        original: "https://images.unsplash.com/photo-1561501900-3701fa6a0864?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                         alt: "Pool view"
                     }
                 ],
@@ -293,13 +293,13 @@ export async function POST(req: Request) {
                 ],
                 images: [
                     {
-                        thumbnail: "/hero.png",
-                        original: "/hero.png",
+                        thumbnail: "https://images.unsplash.com/photo-1561501900-3701fa6a0864?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                        original: "https://images.unsplash.com/photo-1561501900-3701fa6a0864?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                         alt: "Resort view"
                     },
                     {
-                        thumbnail: "/hero.png",
-                        original: "/hero.png",
+                        thumbnail: "https://images.unsplash.com/photo-1617859047452-8510bcf207fd?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                        original: "https://images.unsplash.com/photo-1617859047452-8510bcf207fd?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                         alt: "Beach view"
                     }
                 ],

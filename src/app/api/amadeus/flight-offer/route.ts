@@ -41,10 +41,12 @@ export const POST = async (req: Request) => {
         searchUrl.searchParams.append('currencyCode', 'USD');
         searchUrl.searchParams.append('max', '100');
 
-        if (returnDate) searchUrl.searchParams.append('returnDate', returnDate);
+        if (returnDate && returnDate !== 'undefined') searchUrl.searchParams.append('returnDate', returnDate);
         if (children > 0) searchUrl.searchParams.append('children', children.toString());
         if (infants > 0) searchUrl.searchParams.append('infants', infants.toString());
         if (travelClass) searchUrl.searchParams.append('travelClass', travelClass);
+
+        console.log(searchUrl.toString(), returnDate, typeof returnDate);
 
         const response = await fetch(searchUrl.toString(), {
             method: "GET",

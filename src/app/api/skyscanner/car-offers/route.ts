@@ -227,11 +227,11 @@ const MOCK_CARS: CarOffer[] = [
         brand: "Toyota",
         images: [
             {
-                url: "https://images.unsplash.com/photo-1621007806519-67e7cec33011",
+                url: "https://images.hgmsites.net/med/2025-toyota-camry_100926324_m.webp",
                 alt: "Toyota Camry - Front View"
             },
             {
-                url: "https://images.unsplash.com/photo-1621007806519-67e7cec33012",
+                url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSajO3EOsmweYAa27xDS6wGCYgW1ChWDM4zCQ&s",
                 alt: "Toyota Camry - Side View"
             }
         ],
@@ -330,7 +330,7 @@ const MOCK_CARS: CarOffer[] = [
         brand: "Tesla",
         images: [
             {
-                url: "https://images.unsplash.com/photo-1621007806519-67e7cec33013",
+                url: "https://ecofactortech.com/wp-content/uploads/2024/10/screen-post-A-JEMot0hWs-unsplash.jpg",
                 alt: "Tesla Model 3 - Front View"
             }
         ],

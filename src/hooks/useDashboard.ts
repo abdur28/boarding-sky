@@ -81,6 +81,7 @@ export const useDashboard = create<DashboardState>((set, get) => ({
                 headers: {
                     "Content-Type": "application/json",
                 },
+                body: JSON.stringify({}),
             });
             const data = await response.json();
             set({ isLoading: false, info: data.data });
@@ -99,6 +100,7 @@ export const useDashboard = create<DashboardState>((set, get) => ({
                 headers: {
                     "Content-Type": "application/json",
                 },
+                body: JSON.stringify({}),
             });
             const data = await response.json();
             set({ isLoading: false, users: data.data });
@@ -189,6 +191,7 @@ export const useDashboard = create<DashboardState>((set, get) => ({
                 headers: {
                     "Content-Type": "application/json",
                 },
+                body: JSON.stringify({}),
             });
             const data = await response.json();
             set({ isLoading: false, blogs: data.data });
@@ -207,6 +210,7 @@ export const useDashboard = create<DashboardState>((set, get) => ({
                 headers: {
                     "Content-Type": "application/json",
                 },
+                body: JSON.stringify({}),
             });
             const data = await response.json();
             set({ isLoading: false, hotelOffers: data.data });
@@ -225,6 +229,7 @@ export const useDashboard = create<DashboardState>((set, get) => ({
                 headers: {
                     "Content-Type": "application/json",
                 },
+                body: JSON.stringify({}),
             });
             const data = await response.json();
             set({ isLoading: false, tours: data.data });
@@ -243,6 +248,7 @@ export const useDashboard = create<DashboardState>((set, get) => ({
                 headers: {
                     "Content-Type": "application/json",
                 },
+                body: JSON.stringify({}),
             });
             const data = await response.json();
             set({ isLoading: false, carOffers: data.data });
@@ -262,6 +268,7 @@ export const useDashboard = create<DashboardState>((set, get) => ({
                 headers: {
                     "Content-Type": "application/json",
                 },
+                body: JSON.stringify({}),
             });
             const data = await response.json();
             set({ isLoading: false, destinations: data.data });
@@ -281,6 +288,7 @@ export const useDashboard = create<DashboardState>((set, get) => ({
                 headers: {
                     "Content-Type": "application/json",
                 },
+                body: JSON.stringify({}),
             });
             const data = await response.json();
             set({ isLoading: false, flightOffers: data.data });
@@ -300,6 +308,7 @@ export const useDashboard = create<DashboardState>((set, get) => ({
                 headers: {
                     "Content-Type": "application/json",
                 },
+                body: JSON.stringify({}),
             });
             const data = await response.json();
             set({ isLoading: false, flightDeals: data.data });
